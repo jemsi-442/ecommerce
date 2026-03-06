@@ -20,10 +20,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ✅ MongoDB Atlas connection
-const mongoURI = process.env.MONGODB_URI; // use Render env variable
+const rawMongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
+const mongoURI = rawMongoURI
+  ? rawMongoURI.trim().replace(/^['"]|['"]$/g, "")
+  : ""; // support accidental quotes in env var values
 
 if (!mongoURI) {
-  console.error("❌ MONGODB_URI not defined in environment variables");
+  console.error("❌ MONGODB_URI/MONGO_URI not defined in environment variables");
   process.exit(1);
 }
 
@@ -81,10 +84,7 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(mongoURI);
     console.log("✅ MongoDB connected");
 
     // Rider SLA job
