@@ -1,48 +1,61 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
-const auditLogSchema = new mongoose.Schema(
+const AuditLog = sequelize.define(
+  "AuditLog",
   {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     orderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      default: null,
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
     },
     riderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Rider",
-      default: null,
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
     },
-    userName: String,
-    riderName: String,
+    userName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    riderName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     type: {
-      type: String,
-      enum: ["status", "delivery", "notification", "refund", "user"],
-      required: true,
+      type: DataTypes.ENUM("status", "delivery", "notification", "refund", "user"),
+      allowNull: false,
     },
     action: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     message: {
-      type: String,
-      required: true,
-      trim: true,
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     meta: {
-      type: Object,
-      default: {},
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {},
     },
   },
-  { timestamps: true, strict: true }
+  {
+    tableName: "audit_logs",
+    timestamps: true,
+  }
 );
 
-auditLogSchema.index({ type: 1, createdAt: -1 });
-auditLogSchema.index({ userId: 1, createdAt: -1 });
-
-export default mongoose.model("AuditLog", auditLogSchema);
+export default AuditLog;

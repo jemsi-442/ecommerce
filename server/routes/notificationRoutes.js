@@ -33,9 +33,9 @@ export const sendOrderNotification = async (req, res) => {
 // GET /notifications
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const notifications = await Notification.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     res.json(notifications);
   } catch (err) {
     console.error(err);

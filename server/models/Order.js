@@ -1,125 +1,100 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
-const orderSchema = new mongoose.Schema(
+const Order = sequelize.define(
+  "Order",
   {
-    // 🔐 Order owner
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
     },
-
-    // 🛒 Ordered items
-    items: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        name: { type: String, required: true },
-        qty: { type: Number, required: true },
-        price: { type: Number, required: true },
-      },
-    ],
-
-    // 💰 Total
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    items: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+    },
     totalAmount: {
-      type: Number,
-      required: true,
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: false,
+      defaultValue: 0,
     },
-
-    // 🚦 Order status (LOCAL delivery flow)
     status: {
-      type: String,
-      enum: [
+      type: DataTypes.ENUM(
         "pending",
         "paid",
         "out_for_delivery",
         "delivered",
         "cancelled",
-        "refunded",
-      ],
-      default: "pending",
-      index: true,
+        "refunded"
+      ),
+      allowNull: false,
+      defaultValue: "pending",
     },
-
-    // 🚚 DELIVERY LOGIC
-    delivery: {
-      type: {
-        type: String,
-        enum: ["home", "pickup"],
-        required: true,
-      },
-
-      address: {
-        type: String,
-        required: function () {
-          return this.delivery.type === "home";
-        },
-      },
-
-      contactPhone: {
-        type: String,
-        required: true,
-      },
-
-      rider: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Rider",
-        default: null,
-      },
-
-      // 🔥 AUTO-SET ON ASSIGN
-      assignedAt: {
-        type: Date,
-        default: null,
-      },
-
-      // 🟡 Rider accepted job
-      acceptedAt: {
-        type: Date,
-        default: null,
-      },
-
-      // 🟢 Delivered time
-      completedAt: {
-        type: Date,
-        default: null,
-      },
+    deliveryType: {
+      type: DataTypes.ENUM("home", "pickup"),
+      allowNull: false,
+      defaultValue: "home",
     },
-
-    // 💳 Payment info (future-proof)
+    deliveryAddress: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    deliveryContactPhone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "",
+    },
+    riderId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
+    },
+    assignedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
+    acceptedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
+    completedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
     paymentMethod: {
-      type: String,
-      default: "cash_on_delivery",
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "cash_on_delivery",
     },
-
     isPaid: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
-
     paidAt: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
-
     deliveredAt: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {
+    tableName: "orders",
     timestamps: true,
   }
 );
 
-// 🔥 Useful compound index (admin dashboard & rider queries)
-orderSchema.index({
-  status: 1,
-  "delivery.rider": 1,
-  "delivery.assignedAt": 1,
-});
-
-export default mongoose.model("Order", orderSchema);
+export default Order;

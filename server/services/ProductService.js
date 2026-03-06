@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+import sequelize from "../config/db.js";
 import Product from "../models/Product.js";
 import AuditLog from "../models/AuditLog.js";
 import ApiError from "../utils/ApiError.js";
+import { serializeProduct } from "../utils/serializers.js";
 
 const ALLOWED_CREATE_FIELDS = [
   "name",
@@ -18,7 +19,7 @@ const normalizeImages = (images) => {
   if (!images) return undefined;
   if (!Array.isArray(images)) throw new ApiError(400, "images must be an array");
 
-  return images
+  const normalized = images
     .filter(Boolean)
     .map((item) => {
       if (typeof item === "string") {
@@ -34,6 +35,12 @@ const normalizeImages = (images) => {
 
       throw new ApiError(400, "Invalid image payload");
     });
+
+  if (normalized.length > 8) {
+    throw new ApiError(400, "A product can have at most 8 images");
+  }
+
+  return normalized;
 };
 
 const pick = (src, allowedKeys) =>
@@ -46,9 +53,9 @@ const pick = (src, allowedKeys) =>
 
 class ProductService {
   static async getProductById(productId) {
-    const product = await Product.findById(productId).lean();
+    const product = await Product.findByPk(productId);
     if (!product) throw new ApiError(404, "Product not found");
-    return product;
+    return serializeProduct(product);
   }
 
   static async createProduct(input, actorId) {
@@ -64,32 +71,30 @@ class ProductService {
       status: "pending",
     });
 
-    return product;
+    return serializeProduct(product);
   }
 
   static async listProducts({ page = 1, limit = 20, status }) {
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
 
-    const query = {};
-    if (status) query.status = status;
+    const where = {};
+    if (status) where.status = status;
 
-    const [items, total] = await Promise.all([
-      Product.find(query)
-        .sort({ createdAt: -1 })
-        .skip((safePage - 1) * safeLimit)
-        .limit(safeLimit)
-        .lean(),
-      Product.countDocuments(query),
-    ]);
+    const { rows, count } = await Product.findAndCountAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      offset: (safePage - 1) * safeLimit,
+      limit: safeLimit,
+    });
 
     return {
-      items,
+      items: rows.map((item) => serializeProduct(item)),
       pagination: {
         page: safePage,
         limit: safeLimit,
-        total,
-        pages: Math.ceil(total / safeLimit) || 1,
+        total: count,
+        pages: Math.ceil(count / safeLimit) || 1,
       },
     };
   }
@@ -105,104 +110,63 @@ class ProductService {
       throw new ApiError(400, "No updatable fields provided");
     }
 
-    const updated = await Product.findByIdAndUpdate(productId, { $set: payload }, {
-      new: true,
-      runValidators: true,
-    });
+    const product = await Product.findByPk(productId);
+    if (!product) throw new ApiError(404, "Product not found");
 
-    if (!updated) throw new ApiError(404, "Product not found");
+    await product.update(payload);
 
-    return updated;
+    return serializeProduct(product);
   }
 
   static async deleteProduct(productId) {
-    const deleted = await Product.findByIdAndDelete(productId);
-    if (!deleted) throw new ApiError(404, "Product not found");
-    return deleted;
+    const product = await Product.findByPk(productId);
+    if (!product) throw new ApiError(404, "Product not found");
+
+    await product.destroy();
+    return serializeProduct(product);
   }
 
   static async approveProduct(productId, adminId) {
-    const session = await mongoose.startSession();
+    return sequelize.transaction(async (transaction) => {
+      const product = await Product.findByPk(productId, { transaction, lock: true });
 
-    try {
-      const executeApproval = async (txnSession = null) => {
-        let approvedProduct = await Product.findOneAndUpdate(
-          {
-            _id: productId,
-            status: { $ne: "approved" },
-          },
-          {
-            $set: {
-              status: "approved",
-              approvedAt: new Date(),
-              approvedBy: adminId,
-            },
-          },
-          {
-            new: true,
-            runValidators: true,
-            session: txnSession || undefined,
-          }
-        );
-
-        let wasIdempotent = false;
-
-        if (!approvedProduct) {
-          const existingQuery = Product.findById(productId);
-          if (txnSession) existingQuery.session(txnSession);
-          const existing = await existingQuery;
-
-          if (!existing) {
-            throw new ApiError(404, "Product not found");
-          }
-
-          if (existing.status === "approved") {
-            approvedProduct = existing;
-            wasIdempotent = true;
-            return { approvedProduct, wasIdempotent };
-          }
-
-          throw new ApiError(409, "Unable to approve product due to conflicting state");
-        }
-
-        await AuditLog.create(
-          [
-            {
-              userId: adminId,
-              type: "status",
-              action: "product_approved",
-              message: `Product ${approvedProduct._id} approved`,
-              meta: {
-                productId: approvedProduct._id,
-                status: approvedProduct.status,
-              },
-            },
-          ],
-          txnSession ? { session: txnSession } : undefined
-        );
-
-        return { approvedProduct, wasIdempotent };
-      };
-
-      try {
-        let result;
-        await session.withTransaction(async () => {
-          result = await executeApproval(session);
-        });
-        return { product: result.approvedProduct, idempotent: result.wasIdempotent };
-      } catch (error) {
-        const txNotSupported =
-          error?.message?.includes("Transaction numbers are only allowed") ||
-          error?.message?.includes("replica set");
-
-        if (!txNotSupported) throw error;
-
-        const result = await executeApproval(null);
-        return { product: result.approvedProduct, idempotent: result.wasIdempotent };
+      if (!product) {
+        throw new ApiError(404, "Product not found");
       }
-    } finally {
-      await session.endSession();
-    }
+
+      if (product.status === "approved") {
+        return { product: serializeProduct(product), idempotent: true };
+      }
+
+      if (product.status !== "pending") {
+        throw new ApiError(409, "Unable to approve product due to conflicting state");
+      }
+
+      await product.update(
+        {
+          status: "approved",
+          approvedAt: new Date(),
+          approvedBy: adminId,
+        },
+        { transaction }
+      );
+
+      await AuditLog.create(
+        {
+          userId: adminId,
+          type: "status",
+          action: "product_approved",
+          message: `Product ${product.id} approved`,
+          meta: {
+            productId: product.id,
+            status: product.status,
+          },
+        },
+        { transaction }
+      );
+
+      return { product: serializeProduct(product), idempotent: false };
+    });
   }
 }
 

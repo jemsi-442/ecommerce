@@ -1,96 +1,71 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
-const imageSchema = new mongoose.Schema(
+const Product = sequelize.define(
+  "Product",
   {
-    url: {
-      type: String,
-      required: true,
-      trim: true,
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
     },
-    publicId: {
-      type: String,
-      trim: true,
-      default: null,
-    },
-  },
-  { _id: false }
-);
-
-const productSchema = new mongoose.Schema(
-  {
     name: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 2,
-      maxlength: 140,
+      type: DataTypes.STRING(140),
+      allowNull: false,
     },
     description: {
-      type: String,
-      trim: true,
-      maxlength: 5000,
-      default: "",
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: "",
     },
     sku: {
-      type: String,
-      required: true,
-      trim: true,
-      uppercase: true,
-      maxlength: 64,
+      type: DataTypes.STRING(64),
+      allowNull: false,
       unique: true,
-      index: true,
-    },
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    stock: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0,
-    },
-    images: {
-      type: [imageSchema],
-      default: [],
-      validate: {
-        validator(value) {
-          return Array.isArray(value) && value.length <= 8;
-        },
-        message: "A product can have at most 8 images",
+      set(value) {
+        this.setDataValue("sku", String(value).trim().toUpperCase());
       },
     },
+    price: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    stock: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    images: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+    },
     status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-      required: true,
-      index: true,
+      type: DataTypes.ENUM("pending", "approved", "rejected"),
+      allowNull: false,
+      defaultValue: "pending",
     },
     approvedAt: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
     approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
     },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-      index: true,
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {
+    tableName: "products",
     timestamps: true,
-    strict: true,
   }
 );
 
-productSchema.index({ status: 1, createdAt: -1 });
-productSchema.index({ createdAt: -1 });
-
-export default mongoose.model("Product", productSchema);
+export default Product;

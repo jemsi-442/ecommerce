@@ -1,34 +1,36 @@
-import Order from "../models/Order.js";
-import Notification from "../models/Notification.js";
-import User from "../models/User.js";
-import Rider from "../models/Rider.js";
+import { Op } from "sequelize";
+import { Order, Notification, User, Rider } from "../models/index.js";
+import { serializeOrder } from "../utils/serializers.js";
 
 // GET /admin/audit?status=&rider=&date=
 export const getAuditLogs = async (req, res) => {
   try {
     const { status, rider, date } = req.query;
-    const query = {};
+    const where = {};
 
-    if (status) query.status = status;
-    if (rider) query["delivery.rider"] = rider;
+    if (status) where.status = status;
+    if (rider) where.riderId = rider;
     if (date) {
       const day = new Date(date);
       const nextDay = new Date(day);
       nextDay.setDate(day.getDate() + 1);
-      query.createdAt = { $gte: day, $lt: nextDay };
+      where.createdAt = { [Op.gte]: day, [Op.lt]: nextDay };
     }
 
-    const orders = await Order.find(query)
-      .populate("user", "name")
-      .populate("delivery.rider", "name")
-      .lean();
+    const orders = await Order.findAll({
+      where,
+      include: [
+        { model: User, as: "user", attributes: ["id", "name"] },
+        { model: Rider, as: "rider", attributes: ["id", "name"] },
+      ],
+    });
 
-    const notifications = await Notification.find({}).lean();
+    const notifications = await Notification.findAll();
 
-    // Consolidate logs
     const logs = [];
 
-    orders.forEach((o) => {
+    orders.forEach((row) => {
+      const o = serializeOrder(row);
       logs.push({
         _id: o._id,
         orderId: o._id,
@@ -40,9 +42,10 @@ export const getAuditLogs = async (req, res) => {
       });
     });
 
-    notifications.forEach((n) => {
+    notifications.forEach((nRow) => {
+      const n = typeof nRow.toJSON === "function" ? nRow.toJSON() : nRow;
       logs.push({
-        _id: n._id,
+        _id: n.id,
         orderId: n.orderId,
         userName: n.customerName,
         riderName: n.riderName || null,
@@ -66,21 +69,18 @@ export const sendNotification = async (req, res) => {
   const { orderId } = req.body;
 
   try {
-    const order = await Order.findById(orderId).populate("user", "name phone");
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: User, as: "user", attributes: ["id", "name"] }],
+    });
+
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Example: call Twilio / WhatsApp API here
-    // await twilio.messages.create({ ... })
-
-    // Save notification record
-    const NotificationModel = await import("../models/Notification.js");
-    const notification = await NotificationModel.default.create({
+    const notification = await Notification.create({
       orderId,
-      customerName: order.user.name,
+      customerName: order.user?.name || null,
       type: "SMS",
-      message: `Your order ${order._id.slice(-5)} is ${order.status}`,
+      message: `Your order ${String(order.id).slice(-5)} is ${order.status}`,
       status: "sent",
-      createdAt: new Date(),
     });
 
     res.json({ message: "Notification sent", notification });

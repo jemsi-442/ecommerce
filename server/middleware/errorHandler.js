@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import ApiError from "../utils/ApiError.js";
 
 export const notFoundHandler = (req, res) => {
@@ -13,7 +12,7 @@ export const errorHandler = (err, req, res, next) => {
   const statusCode =
     err.statusCode ||
     err.status ||
-    (err instanceof mongoose.Error.ValidationError ? 400 : 500);
+    (err.name === "SequelizeValidationError" ? 400 : 500);
 
   const payload = {
     success: false,
@@ -26,14 +25,17 @@ export const errorHandler = (err, req, res, next) => {
     data: null,
   };
 
-  if (err instanceof mongoose.Error.ValidationError) {
-    payload.details = Object.values(err.errors).map((e) => ({
+  if (err.name === "SequelizeValidationError") {
+    payload.details = (err.errors || []).map((e) => ({
       field: e.path,
       message: e.message,
     }));
-  } else if (err.code === 11000) {
+  } else if (err.name === "SequelizeUniqueConstraintError") {
     payload.message = "Duplicate value detected";
-    payload.details = err.keyValue;
+    payload.details = (err.errors || []).map((e) => ({
+      field: e.path,
+      message: e.message,
+    }));
   } else if (err instanceof ApiError && err.details) {
     payload.details = err.details;
   }

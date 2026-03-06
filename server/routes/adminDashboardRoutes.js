@@ -1,143 +1,94 @@
 import express from "express";
-import mongoose from "mongoose";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-
-import Order from "../models/Order.js";
-import User from "../models/User.js";
-import Product from "../models/Product.js";
+import { Order, User, Product } from "../models/index.js";
 
 const router = express.Router();
 
-/**
- * GET /api/admin/dashboard
- * KPIs + Revenue + Orders analytics
- */
 router.get("/dashboard", protect, adminOnly, async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    /* ===========================
-       1️⃣ CORE KPIs
-    ============================ */
-    const [
-      totalRevenue,
-      monthlyRevenue,
-      totalOrders,
-      pendingOrders,
-      totalUsers,
-      totalProducts,
-    ] = await Promise.all([
-      Order.aggregate([
-        { $match: { paymentStatus: "PAID" } },
-        { $group: { _id: null, value: { $sum: "$totalAmount" } } },
-      ]),
-      Order.aggregate([
-        {
-          $match: {
-            paymentStatus: "PAID",
-            createdAt: { $gte: startOfMonth },
-          },
-        },
-        { $group: { _id: null, value: { $sum: "$totalAmount" } } },
-      ]),
-      Order.countDocuments(),
-      Order.countDocuments({ status: "pending" }),
-      User.countDocuments(),
-      Product.countDocuments(),
-    ]);
-
-    /* ===========================
-       2️⃣ ORDERS STATUS BREAKDOWN
-    ============================ */
-    const orderStatusStats = await Order.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    /* ===========================
-       3️⃣ REVENUE BY DAY (last 30 days)
-    ============================ */
     const last30Days = new Date();
     last30Days.setDate(last30Days.getDate() - 30);
 
-    const revenueByDay = await Order.aggregate([
-      {
-        $match: {
-          paymentStatus: "PAID",
-          createdAt: { $gte: last30Days },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
-          },
-          revenue: { $sum: "$totalAmount" },
-          orders: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
+    const [orders, totalUsers, totalProducts] = await Promise.all([
+      Order.findAll({ order: [["createdAt", "DESC"]] }),
+      User.count(),
+      Product.count(),
     ]);
 
-    /* ===========================
-       4️⃣ TOP SELLING PRODUCTS
-    ============================ */
-    const topProducts = await Order.aggregate([
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.product",
-          soldQty: { $sum: "$items.quantity" },
-          revenue: {
-            $sum: {
-              $multiply: ["$items.price", "$items.quantity"],
-            },
-          },
-        },
-      },
-      { $sort: { soldQty: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id",
-          foreignField: "_id",
-          as: "product",
-        },
-      },
-      { $unwind: "$product" },
-      {
-        $project: {
-          name: "$product.name",
-          soldQty: 1,
-          revenue: 1,
-        },
-      },
-    ]);
+    const totalOrders = orders.length;
+    const pendingOrders = orders.filter((o) => o.status === "pending").length;
 
-    /* ===========================
-       5️⃣ CONVERSION (basic)
-       orders / users
-    ============================ */
-    const conversionRate =
-      totalUsers > 0
-        ? ((totalOrders / totalUsers) * 100).toFixed(2)
-        : 0;
+    const paidOrders = orders.filter((o) => o.isPaid);
+    const monthlyPaidOrders = paidOrders.filter((o) => new Date(o.createdAt) >= startOfMonth);
 
-    /* ===========================
-       FINAL RESPONSE
-    ============================ */
+    const totalRevenue = paidOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+    const monthlyRevenue = monthlyPaidOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+
+    const orderStatusMap = new Map();
+    orders.forEach((o) => {
+      orderStatusMap.set(o.status, (orderStatusMap.get(o.status) || 0) + 1);
+    });
+
+    const orderStatusStats = Array.from(orderStatusMap.entries()).map(([status, count]) => ({
+      _id: status,
+      count,
+    }));
+
+    const revenueMap = new Map();
+    orders
+      .filter((o) => o.isPaid && new Date(o.createdAt) >= last30Days)
+      .forEach((o) => {
+        const key = new Date(o.createdAt).toISOString().slice(0, 10);
+        const prev = revenueMap.get(key) || { revenue: 0, orders: 0 };
+        prev.revenue += Number(o.totalAmount);
+        prev.orders += 1;
+        revenueMap.set(key, prev);
+      });
+
+    const revenueByDay = Array.from(revenueMap.entries())
+      .map(([day, val]) => ({ _id: day, revenue: val.revenue, orders: val.orders }))
+      .sort((a, b) => a._id.localeCompare(b._id));
+
+    const soldMap = new Map();
+    orders.forEach((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((item) => {
+        const productId = item.product;
+        const qty = Number(item.qty || item.quantity || 0);
+        const price = Number(item.price || 0);
+        const prev = soldMap.get(productId) || { soldQty: 0, revenue: 0 };
+        prev.soldQty += qty;
+        prev.revenue += qty * price;
+        soldMap.set(productId, prev);
+      });
+    });
+
+    const topSold = Array.from(soldMap.entries())
+      .map(([productId, stat]) => ({ productId, ...stat }))
+      .sort((a, b) => b.soldQty - a.soldQty)
+      .slice(0, 5);
+
+    const topProducts = await Promise.all(
+      topSold.map(async (entry) => {
+        const product = await Product.findByPk(entry.productId);
+        return {
+          name: product?.name || "Unknown Product",
+          soldQty: entry.soldQty,
+          revenue: entry.revenue,
+        };
+      })
+    );
+
+    const conversionRate = totalUsers > 0 ? ((totalOrders / totalUsers) * 100).toFixed(2) : 0;
+
     res.json({
       kpis: {
-        totalRevenue: totalRevenue[0]?.value || 0,
-        monthlyRevenue: monthlyRevenue[0]?.value || 0,
+        totalRevenue,
+        monthlyRevenue,
         totalOrders,
         pendingOrders,
         totalUsers,

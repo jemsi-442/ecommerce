@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { serializeUser } from "../utils/serializers.js";
 
 const extractBearerToken = (authorizationHeader = "") => {
   if (!authorizationHeader.startsWith("Bearer ")) return null;
@@ -14,13 +15,13 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password").lean();
+    const user = await User.findByPk(decoded.id);
 
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found", data: null });
     }
 
-    req.user = user;
+    req.user = serializeUser(user);
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: "Invalid token", data: null });

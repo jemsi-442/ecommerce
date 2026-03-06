@@ -1,13 +1,16 @@
-import Order from "../models/Order.js";
+import { Order, User } from "../models/index.js";
+import { serializeOrder } from "../utils/serializers.js";
 
 // GET /rider/orders
 export const getRiderOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ "delivery.rider": req.user._id })
-      .populate("user", "name")
-      .lean();
+    const orders = await Order.findAll({
+      where: { riderId: req.user._id },
+      include: [{ model: User, as: "user", attributes: ["id", "name"] }],
+      order: [["createdAt", "DESC"]],
+    });
 
-    res.json(orders);
+    res.json(orders.map((order) => serializeOrder(order)));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch orders" });
@@ -25,9 +28,9 @@ export const updateOrderStatus = async (req, res) => {
   };
 
   try {
-    const order = await Order.findById(id);
+    const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
-    if (order.delivery.rider.toString() !== req.user._id.toString())
+    if (String(order.riderId || "") !== String(req.user._id))
       return res.status(403).json({ message: "Not your assigned order" });
 
     if (!VALID_TRANSITIONS[order.status]?.includes(status))
@@ -36,7 +39,7 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
-    res.json({ message: "Order status updated", order });
+    res.json({ message: "Order status updated", order: serializeOrder(order) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to update status" });

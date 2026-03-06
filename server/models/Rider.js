@@ -1,22 +1,51 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
-const riderSchema = new mongoose.Schema(
+const Rider = sequelize.define(
+  "Rider",
   {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
-
-    isActive: {
-      type: Boolean,
-      default: true,
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
     },
-
-    // to avoid overloading one rider
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    available: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     currentOrders: {
-      type: Number,
-      default: 0,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lastAssignedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
   },
-  { timestamps: true }
+  {
+    tableName: "riders",
+    timestamps: true,
+  }
 );
 
-export default mongoose.model("Rider", riderSchema);
+export default Rider;

@@ -2,8 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
+import { connectDB } from "./config/db.js";
+import "./models/index.js";
 
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -18,17 +19,6 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// ✅ MongoDB Atlas connection
-const rawMongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
-const mongoURI = rawMongoURI
-  ? rawMongoURI.trim().replace(/^['"]|['"]$/g, "")
-  : ""; // support accidental quotes in env var values
-
-if (!mongoURI) {
-  console.error("❌ MONGODB_URI/MONGO_URI not defined in environment variables");
-  process.exit(1);
-}
 
 // CORS configuration
 app.use(
@@ -84,8 +74,8 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    await mongoose.connect(mongoURI);
-    console.log("✅ MongoDB connected");
+    await connectDB();
+    console.log("✅ MariaDB connected");
 
     // Rider SLA job
     setInterval(() => {
@@ -96,7 +86,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("❌ MongoDB connection failed:", error.message);
+    console.error("❌ Database connection failed:", error.message);
     process.exit(1);
   }
 };

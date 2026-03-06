@@ -1,7 +1,12 @@
-import Order from "../models/Order.js";
-import Rider from "../models/Rider.js";
+import { Order, Rider, User } from "../models/index.js";
 import { assignRider } from "../utils/assignRider.js";
 import { canTransition } from "../utils/orderStatusFlow.js";
+import { serializeOrder } from "../utils/serializers.js";
+
+const orderIncludes = [
+  { model: User, as: "user", attributes: ["id", "name", "email"] },
+  { model: Rider, as: "rider", attributes: ["id", "name", "phone"] },
+];
 
 /**
  * ===============================
@@ -16,14 +21,21 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Order items required" });
     }
 
+    if (!delivery?.type || !delivery?.contactPhone) {
+      return res.status(400).json({ message: "Delivery type and contactPhone are required" });
+    }
+
     const order = await Order.create({
-      user: req.user._id,
+      userId: req.user._id,
       items,
       totalAmount,
-      delivery,
+      deliveryType: delivery.type,
+      deliveryAddress: delivery.address || null,
+      deliveryContactPhone: delivery.contactPhone,
     });
 
-    res.status(201).json(order);
+    const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+    res.status(201).json(serializeOrder(fullOrder));
   } catch (err) {
     console.error("CREATE ORDER ERROR:", err);
     res.status(500).json({ message: "Failed to create order" });
@@ -38,13 +50,11 @@ export const createOrder = async (req, res) => {
  */
 export const markAsPaid = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findByPk(req.params.id);
 
-    if (!order)
-      return res.status(404).json({ message: "Order not found" });
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    if (order.isPaid)
-      return res.status(400).json({ message: "Order already paid" });
+    if (order.isPaid) return res.status(400).json({ message: "Order already paid" });
 
     if (!canTransition(order.status, "paid")) {
       return res.status(400).json({
@@ -56,19 +66,20 @@ export const markAsPaid = async (req, res) => {
     order.isPaid = true;
     order.paidAt = new Date();
 
-    // 🚚 AUTO ASSIGN RIDER (HOME DELIVERY)
-    if (order.delivery.type === "home") {
+    if (order.deliveryType === "home") {
       const riderId = await assignRider();
 
       if (riderId) {
-        order.delivery.rider = riderId;
-        order.delivery.assignedAt = new Date();
+        order.riderId = riderId;
+        order.assignedAt = new Date();
         order.status = "out_for_delivery";
       }
     }
 
     await order.save();
-    res.json(order);
+
+    const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+    res.json(serializeOrder(fullOrder));
   } catch (err) {
     console.error("MARK PAID ERROR:", err);
     res.status(500).json({ message: "Failed to mark order as paid" });
@@ -83,10 +94,9 @@ export const markAsPaid = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findByPk(req.params.id);
 
-    if (!order)
-      return res.status(404).json({ message: "Order not found" });
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (!canTransition(order.status, status)) {
       return res.status(400).json({
@@ -96,28 +106,25 @@ export const updateOrderStatus = async (req, res) => {
 
     order.status = status;
 
-    // timestamps & cleanup
     if (status === "delivered") {
       order.deliveredAt = new Date();
-      order.delivery.completedAt = new Date();
+      order.completedAt = new Date();
 
-      if (order.delivery.rider) {
-        await Rider.findByIdAndUpdate(order.delivery.rider, {
-          available: true,
-        });
+      if (order.riderId) {
+        await Rider.update({ available: true }, { where: { id: order.riderId } });
       }
     }
 
     if (status === "cancelled" || status === "refunded") {
-      if (order.delivery?.rider) {
-        await Rider.findByIdAndUpdate(order.delivery.rider, {
-          available: true,
-        });
+      if (order.riderId) {
+        await Rider.update({ available: true }, { where: { id: order.riderId } });
       }
     }
 
     await order.save();
-    res.json(order);
+
+    const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+    res.json(serializeOrder(fullOrder));
   } catch (err) {
     console.error("UPDATE STATUS ERROR:", err);
     res.status(500).json({ message: "Failed to update order status" });
@@ -131,11 +138,13 @@ export const updateOrderStatus = async (req, res) => {
  */
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id })
-      .populate("delivery.rider", "name phone")
-      .sort({ createdAt: -1 });
+    const orders = await Order.findAll({
+      where: { userId: req.user._id },
+      include: orderIncludes,
+      order: [["createdAt", "DESC"]],
+    });
 
-    res.json(orders);
+    res.json(orders.map((order) => serializeOrder(order)));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch orders" });
   }
@@ -148,12 +157,12 @@ export const getMyOrders = async (req, res) => {
  */
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate("user", "name email phone")
-      .populate("delivery.rider", "name phone")
-      .sort({ createdAt: -1 });
+    const orders = await Order.findAll({
+      include: orderIncludes,
+      order: [["createdAt", "DESC"]],
+    });
 
-    res.json(orders);
+    res.json(orders.map((order) => serializeOrder(order)));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch orders" });
   }
