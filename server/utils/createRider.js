@@ -9,7 +9,7 @@ export const ensureRiderAccount = async () => {
   const email = process.env.RIDER_EMAIL || "rider@ramla.com";
   const password = process.env.RIDER_PASSWORD || "Jay442tx";
   const name = process.env.RIDER_NAME || "Ramla Rider";
-  const phone = process.env.RIDER_PHONE || "0712345678";
+  const phone = process.env.RIDER_PHONE || "0713551801";
 
   let user = await User.findOne({ where: { email } });
 
