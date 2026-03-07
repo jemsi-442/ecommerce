@@ -4,29 +4,49 @@ import User from "../models/User.js";
 
 dotenv.config();
 
-const createAdmin = async () => {
-  await connectDB();
+export const ensureAdminAccount = async () => {
+  const email = process.env.ADMIN_EMAIL || "admin@ramla.com";
+  const password = process.env.ADMIN_PASSWORD || "Jay442tx";
+  const name = process.env.ADMIN_NAME || "Ramla Admin";
 
-  const email = "admin@ramla.com";
+  const existing = await User.findOne({ where: { email } });
 
-  const exists = await User.findOne({ where: { email } });
-  if (exists) {
-    console.log("Admin already exists");
-    process.exit(0);
+  if (existing) {
+    existing.name = name;
+    existing.password = password;
+    existing.role = "admin";
+    existing.active = true;
+    await existing.save();
+    return { created: false, email };
   }
 
   await User.create({
-    name: "Ramla Admin",
+    name,
     email,
-    password: "admin123",
+    password,
     role: "admin",
+    active: true,
   });
 
-  console.log("Admin created successfully");
-  process.exit(0);
+  return { created: true, email };
 };
 
-createAdmin().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+const run = async () => {
+  try {
+    await connectDB();
+    const result = await ensureAdminAccount();
+    console.log(
+      result.created
+        ? `Admin created successfully for ${result.email}`
+        : `Admin account reset successfully for ${result.email}`
+    );
+    process.exit(0);
+  } catch (error) {
+    console.error("Error creating admin:", error);
+    process.exit(1);
+  }
+};
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  run();
+}

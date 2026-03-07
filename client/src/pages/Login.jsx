@@ -2,23 +2,27 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import api from "../utils/axios";
 import { useAuth } from "../hooks/useAuth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname;
+  const infoMessage = location.state?.message;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const res = await api.post("/auth/login", { email, password });
-
-      // server inarudisha: _id, name, email, role, token
       const { _id, name, email: em, role, token } = res.data;
 
       login({
@@ -26,50 +30,100 @@ export default function Login() {
         token,
       });
 
-      // redirect based on role
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+
       switch (role) {
         case "admin":
-          navigate("/admin");
+          navigate("/admin", { replace: true });
           break;
         case "rider":
-          navigate("/rider");
+          navigate("/rider", { replace: true });
           break;
         default:
-          navigate("/");
+          navigate("/shop", { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Email au password sio sahihi 💔");
+      setError(err.response?.data?.message || "Email au password sio sahihi.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-rose-200 px-4 py-10">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-5 md:p-8 rounded-2xl shadow-xl w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold text-center text-primary mb-2">Karibu Tena 💕</h2>
-        <p className="text-center text-gray-500 mb-6">Ingia uone pochi mpya za kupendeza</p>
+    <div className="min-h-screen bg-[linear-gradient(160deg,#020617_0%,#111827_45%,#3b0764_100%)] px-4 py-12">
+      <div className="max-w-5xl mx-auto grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/30">
+        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.35),transparent_45%),#0f172a] p-10 text-white">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">RihanCollection</p>
+            <h1 className="mt-4 text-4xl font-black leading-tight">Secure Access To Premium Shop</h1>
+            <p className="mt-4 text-slate-300">Login kwanza ili upate product catalog, cart, checkout, na order tracking.</p>
+          </div>
+          <p className="text-sm text-slate-400">Commerce platform with role-based access and modern delivery workflow.</p>
+        </aside>
 
-        {error && <p className="bg-red-100 text-red-600 p-2 rounded mb-3 text-sm">{error}</p>}
+        <motion.div
+          initial={{ opacity: 0, x: 18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35 }}
+          className="bg-white p-6 md:p-10"
+        >
+          <h2 className="text-3xl font-black text-slate-900">Welcome Back</h2>
+          <p className="mt-1 text-slate-500">Ingia kwenye account yako uendelee na shopping.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="Email"
-            className="input"
-            value={email} onChange={e => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password"
-            className="input"
-            value={password} onChange={e => setPassword(e.target.value)} required />
-          <button className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:opacity-90">
-            Login 🌸
-          </button>
-        </form>
+          {infoMessage && (
+            <p className="mt-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              {infoMessage}
+            </p>
+          )}
 
-        <p className="text-center mt-4 text-sm">
-          Huna account? <Link to="/register" className="text-primary font-semibold">Jisajili</Link>
-        </p>
-      </motion.div>
+          {error && (
+            <p className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium text-slate-700">Password</label>
+              <input
+                type="password"
+                placeholder="Your password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              disabled={loading}
+              className="w-full btn-primary rounded-xl py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? "Ingia..." : "Login"}
+            </button>
+          </form>
+
+          <p className="text-center mt-5 text-sm text-slate-600">
+            Huna account?{" "}
+            <Link to="/register" className="font-semibold text-rose-600 hover:text-rose-700">
+              Jisajili
+            </Link>
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 }

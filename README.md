@@ -1,190 +1,144 @@
-# Rihan-Collection E-Commerce & Delivery Platform
+# Rihan-Collection
 
-![Rihan-Collection Logo](https://via.placeholder.com/150x50?text=RamlaWeb)
+Rihan-Collection is an e-commerce and delivery platform for women's products.
 
-## 1 Project Overview
+## Stack
 
-**Rihan-Collection** is a modern e-commerce platform designed specifically for **women’s products**, combining a beautiful shopping experience with **full logistics and delivery management**.  
-It includes **product management, user authentication, admin analytics, rider assignment, SLA enforcement, and audit trail**.
+- Frontend: React, TailwindCSS
+- Backend: Node.js, Express.js
+- Database: MariaDB (Sequelize ORM)
+- Auth: JWT (role-based)
+- Media: Cloudinary
 
-The system is built using:
+## Core Features
 
-- **Frontend:** React, TailwindCSS, Recharts, React Icons  
-- **Backend:** Node.js, Express.js, MongoDB, Mongoose  
-- **Authentication & Authorization:** JWT, role-based access control  
-- **Deployment-ready:** Environment variables, Cloudinary integration, and Vercel/Heroku-ready  
+- User registration/login
+- Product management
+- Order lifecycle: `pending -> paid -> out_for_delivery -> delivered/cancelled/refunded`
+- Rider assignment and timeout re-assignment job
+- Admin dashboard metrics
 
----
+## Project Structure
 
-## 2  Features
+- `client/` - frontend app
+- `server/` - backend API
 
-###  Shop & Products
-- Browse products with gallery and variant selection
-- Stock tracking and SKU management
-- Add to cart, view cart totals
-- Checkout with delivery selection (home/pickup)
-- Automatic order creation
+## Backend Setup (MariaDB)
 
-###  Authentication & Users
-- Login/Register with JWT
-- Role-based access (Admin / Rider / User)
-- Password hashing and secure authentication
+### 1. Install dependencies
 
-###  Orders & Delivery
-- Full order lifecycle: pending → paid → out_for_delivery → delivered / cancelled / refunded
-- Auto-assign riders with **fair load balancing**
-- SLA enforcement: riders have **2 minutes** to accept orders
-- Auto-reassign if SLA is missed
-- Rider dashboard for accept/reject/delivered actions
-- Rider notifications and SLA countdown
-
-###  Admin Dashboard
-- KPIs: revenue, order count, conversion, rider load, delivery time
-- Charts: weekly revenue, orders by status, rider assignments
-- Audit trail: order actions, refunds, notifications
-- Manage products, orders, users
-- Status update and refund handling
-
-###  Notifications
-- SMS/WhatsApp notifications per order/delivery
-- Audit logs for compliance and traceability
-
----
-
-## 3 Architecture
-
-
-
-React Frontend -> Tailwind + Recharts + Axios
-|
-v
-Express API -> REST endpoints (products, orders, users, admin, rider)
-|
-v
-MongoDB + Mongoose -> Order, Product, User, Rider models
-|
-v
-Cloudinary -> Product image storage
-
-
-### Core Backend Concepts
-- **Middleware:** `protect`, `adminOnly`, role-based guards
-- **Utilities:** `assignRider`, `orderStatusFlow`
-- **Jobs:** `riderAutoTimeout` (SLA enforcement)
-- **Controllers:** Orders, Users, Products, Auth, Admin
-- **Environment Variables:**
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_atlas_url
-JWT_SECRET=supersecretkey
-CLOUDINARY_NAME=xxxx
-CLOUDINARY_API_KEY=xxxx
-CLOUDINARY_API_SECRET=xxxx
-CLIENT_URL=http://localhost:5173
-
-4 Setup & Installation
-Prerequisites
-
-Node.js >= 18
-
-MongoDB Atlas or local MongoDB instance
-
-Cloudinary account for image uploads
-
-Backend Setup
+```bash
 cd server
 npm install
-cp .env.example .env
-# edit .env with your credentials
-npm run dev
+```
 
-Frontend Setup
+### 2. Configure environment
+
+Copy `server/.env.example` to `server/.env`, then update values:
+
+```env
+NODE_ENV=development
+PORT=5001
+JWT_SECRET=replace_with_a_long_random_secret_min_32_chars
+
+DATABASE_URL=mariadb://root:your_mysql_password@127.0.0.1:3306/rihancollection
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=rihancollection
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_SYNC=true
+DB_SYNC_ALTER=true
+
+CLOUDINARY_NAME=replace_with_cloudinary_cloud_name
+CLOUDINARY_API_KEY=replace_with_cloudinary_api_key
+CLOUDINARY_API_SECRET=replace_with_cloudinary_api_secret
+CLIENT_URL=http://localhost:5173
+CLIENT_URLS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+### 3. Prepare database
+
+i already created:
+
+- `users`
+- `products`
+- `orders`
+- `order_items`
+
+The app also runs `sequelize.sync({ alter: true })`, so missing columns/tables used by the current backend will be added automatically.
+For production, prefer `DB_SYNC_ALTER=false` unless you intentionally want schema auto-alter enabled.
+
+### 4. Start backend
+
+```bash
+cd server
+npm start
+```
+
+Backend default URL: `http://localhost:5001`
+
+### 5. Bootstrap local test accounts
+
+```bash
+cd server
+npm run create-admin
+npm run create-rider
+npm run create-test-order
+```
+
+Default local credentials:
+
+- Admin: `admin@ramla.com` / `Jay442tx`
+- Rider: `rider@ramla.com` / `Jay442tx`
+- Test customer: `customer@ramla.com` / `Jay442tx`
+
+## Frontend Setup
+
+Copy `client/.env.example` to `client/.env`, then start the app:
+
+```bash
 cd client
 npm install
 npm run dev
+```
 
+Frontend default URL: `http://localhost:5173`
 
-Frontend runs on http://localhost:5173
-Backend runs on http://localhost:5000
+## Main API Routes
 
-5 API Overview
-Endpoint	Method	Description	Auth
-/api/auth/register	POST	Register new user	No
-/api/auth/login	POST	Login	No
-/api/products	GET	Fetch all products	Public
-/api/orders	POST	Create order	User
-/api/orders/:id/pay	PUT	Mark order paid	User
-/api/orders/:id/status	PUT	Update order status	Admin
-/api/rider/orders	GET	Rider assigned orders	Rider
-/api/rider/orders/:id/accept	PUT	Accept order	Rider
-/api/rider/orders/:id/reject	PUT	Reject order	Rider
-/api/rider/orders/:id/delivered	PUT	Mark delivered	Rider
-/api/admin	GET	Admin dashboard metrics	Admin
-6 Project Roadmap
-Short-Term Goals
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/products`
+- `POST /api/orders`
+- `PUT /api/orders/:id/pay`
+- `PUT /api/orders/:id/status` (admin)
+- `GET /api/rider/orders`
+- `PUT /api/rider/orders/:id/accept`
+- `PUT /api/rider/orders/:id/reject`
+- `PUT /api/rider/orders/:id/delivered`
+- `GET /api/admin/dashboard`
 
-Live updates with WebSockets
+## Deploy (Render - Backend)
 
-Push notifications for riders
+Set:
 
-Improved UI/UX for shop & checkout
+- Root Directory: `server`
+- Build Command: `npm install`
+- Start Command: `npm start`
 
-Automated audit logging for all actions
+Required env vars on Render:
 
-Medium-Term Goals
+- `NODE_ENV=production`
+- `JWT_SECRET=...`
+- `CLIENT_URL=https://your-frontend-domain`
+- `DATABASE_URL=mariadb://USER:PASSWORD@HOST:3306/DBNAME`
+- `CLOUDINARY_NAME=...`
+- `CLOUDINARY_API_KEY=...`
+- `CLOUDINARY_API_SECRET=...`
 
-Multi-vendor support
+## Notes by JAYFOUR
 
-Commission system for sellers
-
-Dynamic pricing & promotions
-
-Rider GPS tracking
-
-Long-Term Goals
-
-AI-based rider assignment and SLA prediction
-
-Heatmap analytics for demand forecasting
-
-Scalable enterprise-ready architecture
-
-SaaS-ready deployment for multiple clients
-
-7 Coding Standards & Best Practices
-
-ES Modules (import/export)
-
-Role-based authorization
-
-Separation of concerns: controllers, routes, utils, models, jobs
-
-Full audit trail and logging
-
-Environment-configured, production-ready
-
-8 Contributors
-
-Lead Developer: Jaykali / Senior Engineer
-
-Frontend: React + Tailwind integration
-
-Backend: Node.js + Express + MongoDB
-
-Design: Ladies-first UI approach (colors, animation, usability)
-
-9 Notes for Deployment
-
-Use NODE_ENV=production in .env
-
-Configure CORS CLIENT_URL to your frontend domain
-
-Ensure MongoDB Atlas cluster allows connection from backend
-
-Use Cloudinary for image uploads in production
-
-🔥 License
-
-This project is proprietary. Redistribution is not allowed without permission.
-
-Enjoy building a modern e-commerce & delivery platform for women’s products! 🌸🚚💻
+- Do not commit real secrets in `.env`.
+- Keep `server/.env` ignored in git.
+- Local uploads are stored in `server/uploads/` when Cloudinary is not configured.

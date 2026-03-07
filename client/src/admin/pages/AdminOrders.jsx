@@ -62,6 +62,18 @@ export default function AdminOrders() {
     }
   };
 
+  const markPaidAndDispatch = async (orderId) => {
+    try {
+      setUpdatingId(orderId);
+      await axios.put(`/orders/${orderId}/pay`);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to dispatch order");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   if (loading) return <TableSkeleton rows={6} />;
 
   return (
@@ -159,9 +171,14 @@ export default function AdminOrders() {
                   ))}
 
                   {order.status === "pending" && (
-                    <span className="text-xs text-gray-400">
-                      waiting payment
-                    </span>
+                    <button
+                      disabled={updatingId === order._id}
+                      onClick={() => markPaidAndDispatch(order._id)}
+                      className="px-3 py-1.5 text-xs rounded-lg border hover:bg-gray-100"
+                    >
+                      <FaMoneyBillWave className="inline mr-1" />
+                      pay & dispatch
+                    </button>
                   )}
                   </div>
                 </td>

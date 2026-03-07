@@ -4,43 +4,25 @@ import AuditLog from "../models/AuditLog.js";
 import ApiError from "../utils/ApiError.js";
 import { serializeProduct } from "../utils/serializers.js";
 
-const ALLOWED_CREATE_FIELDS = [
-  "name",
-  "description",
-  "sku",
-  "price",
-  "stock",
-  "images",
-];
+const ALLOWED_CREATE_FIELDS = ["name", "description", "price", "stock", "image", "sku"];
+const ALLOWED_UPDATE_FIELDS = ["name", "description", "price", "stock", "image", "sku"];
 
-const ALLOWED_UPDATE_FIELDS = ["name", "description", "price", "stock", "sku", "images"];
+const normalizeImage = (input) => {
+  if (!input) return undefined;
 
-const normalizeImages = (images) => {
-  if (!images) return undefined;
-  if (!Array.isArray(images)) throw new ApiError(400, "images must be an array");
+  if (typeof input === "string") return input;
 
-  const normalized = images
-    .filter(Boolean)
-    .map((item) => {
-      if (typeof item === "string") {
-        return { url: item };
-      }
+  if (Array.isArray(input) && input.length === 0) return undefined;
 
-      if (typeof item === "object" && item.url) {
-        return {
-          url: item.url,
-          publicId: item.publicId || null,
-        };
-      }
-
-      throw new ApiError(400, "Invalid image payload");
-    });
-
-  if (normalized.length > 8) {
-    throw new ApiError(400, "A product can have at most 8 images");
+  if (Array.isArray(input) && input.length > 0) {
+    const first = input[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object" && first.url) return first.url;
   }
 
-  return normalized;
+  if (typeof input === "object" && input.url) return input.url;
+
+  throw new ApiError(400, "Invalid image payload");
 };
 
 const pick = (src, allowedKeys) =>
@@ -61,8 +43,11 @@ class ProductService {
   static async createProduct(input, actorId) {
     const payload = pick(input, ALLOWED_CREATE_FIELDS);
 
-    if (payload.images !== undefined) {
-      payload.images = normalizeImages(payload.images);
+    const normalizedImage = normalizeImage(input.images ?? input.image);
+    if (normalizedImage !== undefined) payload.image = normalizedImage;
+
+    if (!payload.name || payload.price == null) {
+      throw new ApiError(400, "name and price are required");
     }
 
     const product = await Product.create({
@@ -83,7 +68,7 @@ class ProductService {
 
     const { rows, count } = await Product.findAndCountAll({
       where,
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
       offset: (safePage - 1) * safeLimit,
       limit: safeLimit,
     });
@@ -102,9 +87,8 @@ class ProductService {
   static async updateProduct(productId, input) {
     const payload = pick(input, ALLOWED_UPDATE_FIELDS);
 
-    if (payload.images !== undefined) {
-      payload.images = normalizeImages(payload.images);
-    }
+    const normalizedImage = normalizeImage(input.images ?? input.image);
+    if (normalizedImage !== undefined) payload.image = normalizedImage;
 
     if (Object.keys(payload).length === 0) {
       throw new ApiError(400, "No updatable fields provided");

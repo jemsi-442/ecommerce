@@ -2,6 +2,7 @@ import User from "./User.js";
 import Rider from "./Rider.js";
 import Product from "./Product.js";
 import Order from "./Order.js";
+import OrderItem from "./OrderItem.js";
 import Notification from "./Notification.js";
 import AuditLog from "./AuditLog.js";
 
@@ -18,7 +19,11 @@ User.hasMany(Product, { foreignKey: "createdBy", as: "createdProducts" });
 Product.belongsTo(User, { foreignKey: "createdBy", as: "creator" });
 Product.belongsTo(User, { foreignKey: "approvedBy", as: "approver" });
 
+Order.hasMany(OrderItem, { foreignKey: "orderId", as: "items" });
+OrderItem.belongsTo(Order, { foreignKey: "orderId", as: "order" });
+OrderItem.belongsTo(Product, { foreignKey: "productId", as: "product" });
+
 Order.hasMany(Notification, { foreignKey: "orderId", as: "notifications" });
 Notification.belongsTo(Order, { foreignKey: "orderId", as: "order" });
 
-export { User, Rider, Product, Order, Notification, AuditLog };
+export { User, Rider, Product, Order, OrderItem, Notification, AuditLog };

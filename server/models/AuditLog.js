@@ -5,34 +5,39 @@ const AuditLog = sequelize.define(
   "AuditLog",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     orderId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "order_id",
     },
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "user_id",
     },
     riderId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "rider_id",
     },
     userName: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
+      field: "user_name",
     },
     riderName: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
+      field: "rider_name",
     },
     type: {
       type: DataTypes.ENUM("status", "delivery", "notification", "refund", "user"),
@@ -54,7 +59,8 @@ const AuditLog = sequelize.define(
   },
   {
     tableName: "audit_logs",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

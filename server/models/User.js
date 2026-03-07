@@ -6,16 +6,16 @@ const User = sequelize.define(
   "User",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(120),
       allowNull: false,
       unique: true,
       set(value) {
@@ -23,11 +23,11 @@ const User = sequelize.define(
       },
     },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM("user", "admin", "rider", "delivery"),
+      type: DataTypes.ENUM("user", "admin", "rider"),
       allowNull: false,
       defaultValue: "user",
     },
@@ -39,7 +39,8 @@ const User = sequelize.define(
   },
   {
     tableName: "users",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
     hooks: {
       async beforeCreate(user) {
         user.password = await bcrypt.hash(user.password, 10);
@@ -49,9 +50,6 @@ const User = sequelize.define(
           user.password = await bcrypt.hash(user.password, 10);
         }
       },
-    },
-    defaultScope: {
-      attributes: { exclude: [] },
     },
   }
 );

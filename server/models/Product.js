@@ -5,29 +5,21 @@ const Product = sequelize.define(
   "Product",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING(140),
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
       defaultValue: "",
     },
-    sku: {
-      type: DataTypes.STRING(64),
-      allowNull: false,
-      unique: true,
-      set(value) {
-        this.setDataValue("sku", String(value).trim().toUpperCase());
-      },
-    },
     price: {
-      type: DataTypes.DECIMAL(12, 2),
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     },
@@ -36,10 +28,22 @@ const Product = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
-    images: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: [],
+    image: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
+    sku: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      unique: true,
+      set(value) {
+        if (value == null || value === "") {
+          this.setDataValue("sku", null);
+          return;
+        }
+        this.setDataValue("sku", String(value).trim().toUpperCase());
+      },
     },
     status: {
       type: DataTypes.ENUM("pending", "approved", "rejected"),
@@ -50,21 +54,25 @@ const Product = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "approved_at",
     },
     approvedBy: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "approved_by",
     },
     createdBy: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "created_by",
     },
   },
   {
     tableName: "products",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

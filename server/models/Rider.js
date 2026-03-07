@@ -5,13 +5,14 @@ const Rider = sequelize.define(
   "Rider",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
+      field: "user_id",
     },
     name: {
       type: DataTypes.STRING,
@@ -30,21 +31,25 @@ const Rider = sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+      field: "is_active",
     },
     currentOrders: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+      field: "current_orders",
     },
     lastAssignedAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "last_assigned_at",
     },
   },
   {
     tableName: "riders",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

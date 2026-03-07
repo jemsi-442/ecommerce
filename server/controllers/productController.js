@@ -1,13 +1,13 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import ProductService from "../services/ProductService.js";
 import { sendResponse } from "../utils/apiResponse.js";
-import { uploadProductImageToCloudinary } from "../middleware/uploadMiddleware.js";
+import { uploadProductImage } from "../middleware/uploadMiddleware.js";
 
 export const createProduct = asyncHandler(async (req, res) => {
   const payload = { ...req.body };
 
   if (req.file?.buffer) {
-    const image = await uploadProductImageToCloudinary(req.file.buffer, req.file.originalname);
+    const image = await uploadProductImage(req.file.buffer, req.file.originalname);
     payload.images = [...(payload.images || []), image];
   }
 
@@ -34,7 +34,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   const payload = { ...req.body };
 
   if (req.file?.buffer) {
-    const image = await uploadProductImageToCloudinary(req.file.buffer, req.file.originalname);
+    const image = await uploadProductImage(req.file.buffer, req.file.originalname);
     payload.images = [...(payload.images || []), image];
   }
 

@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-// 🔥 Audit logs endpoint
+//  Audit logs endpoint
 router.get("/audit", verifyToken, adminMiddleware, getAuditLogs);
 
 // Optional: manually trigger notification

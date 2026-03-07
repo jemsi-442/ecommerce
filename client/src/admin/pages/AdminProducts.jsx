@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
 import axios from "../../utils/axios"; // API instance
-import axiosBase from "axios"; // direct for Cloudinary
 import {
   FiPlus,
   FiEdit,
   FiTrash2,
   FiAlertTriangle,
   FiImage,
+  FiCheckCircle,
 } from "react-icons/fi";
 import { extractList } from "../../utils/apiShape";
 import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../../utils/image";
 import PageState from "../../components/PageState";
+import { useToast } from "../../hooks/useToast";
 
 const LOW_STOCK_LIMIT = 5;
 
 export default function AdminProducts() {
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [error, setError] = useState("");
+  const [approvingId, setApprovingId] = useState(null);
 
   /* ================= FETCH PRODUCTS ================= */
   const fetchProducts = async () => {
@@ -50,6 +53,21 @@ export default function AdminProducts() {
       fetchProducts();
     } catch (err) {
       console.error("Delete error:", err.response?.data || err.message);
+    }
+  };
+
+  /* ================= APPROVE ================= */
+  const handleApprove = async (id) => {
+    try {
+      setApprovingId(id);
+      await axios.put(`/products/${id}/approve`);
+      toast.success("Product approved");
+      fetchProducts();
+    } catch (err) {
+      console.error("Approve error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to approve product");
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -85,6 +103,7 @@ export default function AdminProducts() {
               <th className="p-3">SKU</th>
               <th className="p-3">Price</th>
               <th className="p-3">Stock</th>
+              <th className="p-3">Status</th>
               <th className="p-3">Actions</th>
             </tr>
           </thead>
@@ -124,7 +143,32 @@ export default function AdminProducts() {
                       </div>
                     </td>
 
+                    <td className="p-3">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          p.status === "approved"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : p.status === "rejected"
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {p.status || "pending"}
+                      </span>
+                    </td>
+
                     <td className="p-3 flex gap-3">
+                      {p.status !== "approved" && (
+                        <button
+                          onClick={() => handleApprove(p._id)}
+                          disabled={approvingId === p._id}
+                          className="text-emerald-600 disabled:opacity-50"
+                          title="Approve product"
+                        >
+                          <FiCheckCircle />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => {
                           setEditingProduct(p);
@@ -173,8 +217,12 @@ function ProductModal({ product, onClose, onSaved }) {
     name: product?.name || "",
     price: product?.price || "",
     stock: product?.stock || "",
-    images: product?.images || [],
+    image: product?.image || product?.imageUrl || "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(
+    resolveImageUrl(product?.imageUrl || product?.image, PLACEHOLDER_IMAGE)
+  );
 
   const sku =
     product?.sku ||
@@ -182,45 +230,48 @@ function ProductModal({ product, onClose, onSaved }) {
       .toString()
       .slice(-5)}`;
 
-  /* ===== IMAGE UPLOAD DIRECT TO CLOUDINARY ===== */
-  const handleImageUpload = async (file) => {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    if (!cloudName) {
-      console.error("Missing VITE_CLOUDINARY_CLOUD_NAME");
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  const handleImageUpload = (file) => {
+    if (!file) {
       return;
     }
 
-    const data = new FormData();
-    data.append("file", file);
-    data.append("upload_preset", "products");
-
-    try {
-      const res = await axiosBase.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        data
-      );
-
-      setForm((prev) => ({
-        ...prev,
-        images: [...prev.images, { url: res.data.secure_url, publicId: res.data.public_id }],
-      }));
-    } catch (err) {
-      console.error("Cloudinary upload error:", err.response?.data || err.message);
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
     }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   /* ===== SAVE PRODUCT ===== */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      ...form,
-      sku,
-      price: Number(form.price),
-      stock: Number(form.stock),
-    };
+    if (!product && !imageFile && !form.image) {
+      console.error("Product image is required");
+      return;
+    }
 
     try {
+      const payload = new FormData();
+      payload.append("name", form.name);
+      payload.append("price", Number(form.price));
+      payload.append("stock", Number(form.stock));
+      payload.append("sku", sku);
+      if (imageFile) {
+        payload.append("image", imageFile);
+      } else if (form.image) {
+        payload.append("image", form.image);
+      }
+
       if (product) {
         await axios.put(`/products/${product._id}`, payload);
       } else {
@@ -293,16 +344,14 @@ function ProductModal({ product, onClose, onSaved }) {
         </label>
 
         <div className="flex gap-2 flex-wrap">
-          {form.images.map((img, i) => (
-            <img
-              key={i}
-              src={resolveImageUrl(img, PLACEHOLDER_IMAGE)}
-              onError={(e) => {
-                e.currentTarget.src = PLACEHOLDER_IMAGE;
-              }}
-              className="w-16 h-16 object-cover rounded"
-            />
-          ))}
+          <img
+            src={imagePreview}
+            alt="Product preview"
+            onError={(e) => {
+              e.currentTarget.src = PLACEHOLDER_IMAGE;
+            }}
+            className="w-20 h-20 object-cover rounded"
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

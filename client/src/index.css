@@ -1,57 +1,55 @@
-/* src/index.css */
-
-/* ===== Tailwind base ===== */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Custom classes ===== */
+:root {
+  --brand-rose: #f43f5e;
+  --brand-rose-deep: #e11d48;
+  --ink: #0f172a;
+  --muted: #64748b;
+}
 
-/* Text colors */
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
 .text-primary {
-  @apply text-pink-500; /* inatumia rangi primary uliyo define kwenye tailwind.config.js */
+  color: var(--brand-rose);
 }
 
-.text-soft {
-  @apply text-[#FFF0F6]; /* au tumia theme('colors.soft') kama unataka */
-}
-
-/* Background colors */
 .bg-primary {
-  @apply bg-pink-500; /* rangi primary */
+  background-color: var(--brand-rose);
 }
 
-.bg-soft {
-  @apply bg-[#FFF0F6]; /* rangi soft */
-}
-
-/* Button examples */
 .btn {
-  @apply px-6 py-3 rounded-full font-semibold transition min-h-11;
+  @apply px-6 py-3 rounded-xl font-semibold transition min-h-11;
 }
 
 .btn-primary {
-  @apply btn bg-primary text-white hover:bg-pink-600;
+  @apply btn text-white;
+  background: linear-gradient(135deg, var(--brand-rose), var(--brand-rose-deep));
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
 }
 
 .btn-soft {
-  @apply btn bg-soft text-primary hover:bg-pink-200;
+  @apply btn bg-rose-50 text-rose-600 hover:bg-rose-100;
 }
 
 .btn-secondary {
-  @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200;
+  @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
 }
 
-/* Utility for shadows and rounded cards */
 .card {
-  @apply p-6 bg-white rounded-2xl shadow hover:shadow-lg transition;
+  @apply p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition;
 }
 
-/* Example for container spacing */
 .container {
   @apply max-w-7xl mx-auto px-6;
 }
 
 .input {
-  @apply w-full min-h-11 px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none;
+  @apply w-full min-h-11 px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-rose-200 focus:border-rose-300 outline-none;
 }

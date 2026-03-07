@@ -24,7 +24,7 @@ export const assignRider = async () => {
         where: {
           riderId: rider.id,
           status: "out_for_delivery",
-          createdAt: { [Op.gte]: todayStart },
+          created_at: { [Op.gte]: todayStart },
         },
       });
 

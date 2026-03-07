@@ -5,23 +5,20 @@ const Order = sequelize.define(
   "Order",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    items: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: [],
+      field: "user_id",
     },
     totalAmount: {
-      type: DataTypes.DECIMAL(12, 2),
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
+      field: "total",
     },
     status: {
       type: DataTypes.ENUM(
@@ -39,61 +36,73 @@ const Order = sequelize.define(
       type: DataTypes.ENUM("home", "pickup"),
       allowNull: false,
       defaultValue: "home",
+      field: "delivery_type",
     },
     deliveryAddress: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
+      field: "delivery_address",
     },
     deliveryContactPhone: {
       type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
-    },
-    riderId: {
-      type: DataTypes.UUID,
       allowNull: true,
       defaultValue: null,
+      field: "delivery_contact_phone",
+    },
+    riderId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      field: "rider_id",
     },
     assignedAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "assigned_at",
     },
     acceptedAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "accepted_at",
     },
     completedAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "completed_at",
     },
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "cash_on_delivery",
+      field: "payment_method",
     },
     isPaid: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+      field: "is_paid",
     },
     paidAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "paid_at",
     },
     deliveredAt: {
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+      field: "delivered_at",
     },
   },
   {
     tableName: "orders",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

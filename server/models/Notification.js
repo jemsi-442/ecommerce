@@ -5,14 +5,15 @@ const Notification = sequelize.define(
   "Notification",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     orderId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      field: "order_id",
     },
     type: {
       type: DataTypes.STRING,
@@ -36,11 +37,13 @@ const Notification = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
+      field: "customer_name",
     },
     riderName: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
+      field: "rider_name",
     },
     status: {
       type: DataTypes.STRING,
@@ -50,7 +53,8 @@ const Notification = sequelize.define(
   },
   {
     tableName: "notifications",
-    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: false,
   }
 );
 

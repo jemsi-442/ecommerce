@@ -23,11 +23,14 @@ export const serializeProduct = (row) => {
   const product = toPlain(row);
   if (!product) return null;
 
+  const imageUrl = product.image || null;
+
   return {
     ...product,
     _id: product.id,
     price: Number(product.price),
-    images: Array.isArray(product.images) ? product.images : [],
+    imageUrl,
+    images: imageUrl ? [{ url: imageUrl, publicId: null }] : [],
   };
 };
 
@@ -49,14 +52,31 @@ export const serializeOrder = (row) => {
       }
     : undefined;
 
+  const items = Array.isArray(order.items)
+    ? order.items.map((item) => {
+        const qty = Number(item.quantity || item.qty || 0);
+        const productId = item.product?.id ?? item.productId ?? item.product;
+        const productName = item.product?.name || item.name || null;
+
+        return {
+          _id: item.id,
+          product: productId,
+          name: productName,
+          qty,
+          price: Number(item.price || 0),
+        };
+      })
+    : [];
+
   return {
     ...order,
     _id: order.id,
+    createdAt: order.createdAt || order.created_at || null,
     user: user || order.userId,
-    items: Array.isArray(order.items) ? order.items : [],
+    items,
     totalAmount: Number(order.totalAmount),
     delivery: {
-      type: order.deliveryType,
+      type: order.deliveryType || "home",
       address: order.deliveryAddress,
       contactPhone: order.deliveryContactPhone,
       rider: rider || order.riderId,

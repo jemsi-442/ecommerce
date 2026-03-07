@@ -28,3 +28,7 @@ yarn-error.log*
 # local secrets
 .env
 server/.env
+
+# generated assets
+server/uploads/
+client/dist/

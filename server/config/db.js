@@ -2,6 +2,11 @@ import dotenv from "dotenv";
 import { Sequelize } from "sequelize";
 
 dotenv.config();
+const isProduction = process.env.NODE_ENV === "production";
+const shouldSync = process.env.DB_SYNC !== "false";
+const shouldAlter =
+  process.env.DB_SYNC_ALTER === "true" ||
+  (!isProduction && process.env.DB_SYNC_ALTER !== "false");
 
 const databaseUrl = process.env.DATABASE_URL || process.env.MARIADB_URL || null;
 
@@ -30,7 +35,12 @@ const sequelize = databaseUrl
 
 export const connectDB = async () => {
   await sequelize.authenticate();
-  await sequelize.sync();
+
+  if (!shouldSync) {
+    return;
+  }
+
+  await sequelize.sync({ alter: shouldAlter });
 };
 
 export default sequelize;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "../utils/axios"; // from RiderOrders.jsx
+import axios from "../utils/axios";
 import { extractList } from "../utils/apiShape";
 import useToast from "../hooks/useToast";
 
@@ -13,7 +13,6 @@ const RiderOrders = () => {
   const [now, setNow] = useState(Date.now());
   const toast = useToast();
 
-  // ================= FETCH ORDERS =================
   const fetchOrders = async () => {
     try {
       const { data } = await axios.get("/rider/orders");
@@ -31,36 +30,16 @@ const RiderOrders = () => {
     return () => clearInterval(refresh);
   }, []);
 
-  // ================= LOCAL CLOCK =================
   useEffect(() => {
     const clock = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(clock);
   }, []);
 
-  useEffect(() => {
-    const hasDangerOrder = orders.some((order) => {
-      if (order.delivery?.acceptedAt) return false;
-      const assignedAt = order.delivery?.assignedAt;
-      if (!assignedAt) return false;
-      const elapsed = Math.floor((now - new Date(assignedAt).getTime()) / 1000);
-      const remaining = Math.max(SLA_SECONDS - elapsed, 0);
-      return remaining <= 20;
-    });
-
-    if (hasDangerOrder && navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
-  }, [orders, now]);
-
-  // ================= SLA =================
   const getRemainingSeconds = (assignedAt) => {
-    const elapsed = Math.floor(
-      (now - new Date(assignedAt).getTime()) / 1000
-    );
+    const elapsed = Math.floor((now - new Date(assignedAt).getTime()) / 1000);
     return Math.max(SLA_SECONDS - elapsed, 0);
   };
 
-  // ================= ACTION =================
   const handleAction = async (orderId, action) => {
     if (!window.confirm(`Confirm ${action}?`)) return;
 
@@ -75,79 +54,42 @@ const RiderOrders = () => {
     }
   };
 
-  if (loading) return <p className="p-4">Loading deliveries...</p>;
+  if (loading) return <p className="p-4 text-slate-500">Loading deliveries...</p>;
 
   if (orders.length === 0) {
-    return (
-      <div className="p-4 text-center text-gray-500">
-        No active deliveries 🚲
-      </div>
-    );
+    return <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">No active deliveries.</div>;
   }
 
   return (
-    <div className="px-3 sm:px-4 space-y-4">
-      <h2 className="text-xl font-bold">Assigned Deliveries</h2>
+    <div className="space-y-4 max-w-3xl mx-auto">
+      <h2 className="text-2xl font-black text-slate-900">Assigned Deliveries</h2>
 
       {orders.map((order) => {
         const accepted = Boolean(order.delivery?.acceptedAt);
         const assignedAt = order.delivery?.assignedAt;
-
-        const remaining = assignedAt
-          ? getRemainingSeconds(assignedAt)
-          : null;
-
-        const percent =
-          remaining !== null
-            ? Math.round((remaining / SLA_SECONDS) * 100)
-            : 100;
-
+        const remaining = assignedAt ? getRemainingSeconds(assignedAt) : null;
+        const percent = remaining !== null ? Math.round((remaining / SLA_SECONDS) * 100) : 100;
         const danger = remaining !== null && remaining <= 20;
 
         return (
-          <div
-            key={order._id}
-            className="bg-white rounded-xl shadow p-4 space-y-3"
-          >
-            {/* HEADER */}
+          <div key={order._id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
             <div className="flex justify-between items-center">
-              <span className="font-semibold">
-                Order #{order._id.slice(-6)}
-              </span>
-
-              {!accepted && remaining !== null && (
-                <RadialTimer
-                  percent={percent}
-                  danger={danger}
-                  remaining={remaining}
-                />
-              )}
+              <span className="font-black text-slate-900">Order #{String(order._id).slice(-6)}</span>
+              {!accepted && remaining !== null && <RadialTimer percent={percent} danger={danger} remaining={remaining} />}
             </div>
 
-            {/* DETAILS */}
-            <div className="text-sm space-y-1">
-              <p>
-                <strong>Customer:</strong> {order.user?.name}
-              </p>
-              <p>
-                <strong>Phone:</strong> {order.user?.phone}
-              </p>
-              <p>
-                <strong>Address:</strong> {order.delivery?.address}
-              </p>
+            <div className="text-sm space-y-1 text-slate-600">
+              <p><strong>Customer:</strong> {order.user?.name || "Unknown"}</p>
+              <p><strong>Phone:</strong> {order.user?.phone || "-"}</p>
+              <p><strong>Address:</strong> {order.delivery?.address || "Pickup"}</p>
             </div>
 
-            {/* ACTIONS */}
             {!accepted ? (
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="grid sm:grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={() => handleAction(order._id, "accept")}
                   disabled={remaining === 0 || actionLoading === order._id}
-                  className={`flex-1 py-2.5 rounded-lg text-white ${
-                    remaining === 0
-                      ? "bg-gray-400"
-                      : "bg-green-600"
-                  }`}
+                  className={`py-2.5 rounded-xl text-white font-medium ${remaining === 0 ? "bg-slate-400" : "bg-emerald-600 hover:bg-emerald-700"}`}
                 >
                   Accept
                 </button>
@@ -155,7 +97,7 @@ const RiderOrders = () => {
                 <button
                   onClick={() => handleAction(order._id, "reject")}
                   disabled={actionLoading === order._id}
-                  className="flex-1 bg-red-600 text-white py-2.5 rounded-lg"
+                  className="py-2.5 rounded-xl bg-rose-600 text-white font-medium hover:bg-rose-700"
                 >
                   Reject
                 </button>
@@ -164,7 +106,7 @@ const RiderOrders = () => {
               <button
                 onClick={() => handleAction(order._id, "delivered")}
                 disabled={actionLoading === order._id}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg"
+                className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700"
               >
                 Mark Delivered
               </button>
@@ -178,7 +120,6 @@ const RiderOrders = () => {
 
 export default RiderOrders;
 
-/* ================= RADIAL TIMER ================= */
 const RadialTimer = ({ percent, remaining, danger }) => {
   const stroke = 4;
   const radius = 18;
@@ -187,14 +128,7 @@ const RadialTimer = ({ percent, remaining, danger }) => {
 
   return (
     <svg width="50" height="50">
-      <circle
-        cx="25"
-        cy="25"
-        r={radius}
-        stroke="#e5e7eb"
-        strokeWidth={stroke}
-        fill="none"
-      />
+      <circle cx="25" cy="25" r={radius} stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
       <circle
         cx="25"
         cy="25"
@@ -207,14 +141,7 @@ const RadialTimer = ({ percent, remaining, danger }) => {
         strokeLinecap="round"
         transform="rotate(-90 25 25)"
       />
-      <text
-        x="25"
-        y="30"
-        textAnchor="middle"
-        fontSize="12"
-        fontWeight="bold"
-        fill={danger ? "#dc2626" : "#f59e0b"}
-      >
+      <text x="25" y="30" textAnchor="middle" fontSize="12" fontWeight="bold" fill={danger ? "#dc2626" : "#f59e0b"}>
         {remaining}s
       </text>
     </svg>

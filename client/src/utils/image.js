@@ -1,4 +1,5 @@
 const PLACEHOLDER = "/images/placeholder-bag.svg";
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(/\/api\/?$/, "");
 
 const candidateKeys = [
   "url",
@@ -17,7 +18,14 @@ export const resolveImageUrl = (value, fallback = PLACEHOLDER) => {
 
   if (typeof value === "string") {
     const url = toCleanString(value);
-    return url || fallback;
+    if (!url) return fallback;
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+      return url;
+    }
+    if (url.startsWith("/")) {
+      return `${API_ORIGIN}${url}`;
+    }
+    return url;
   }
 
   if (Array.isArray(value)) {
@@ -31,7 +39,7 @@ export const resolveImageUrl = (value, fallback = PLACEHOLDER) => {
   if (typeof value === "object") {
     for (const key of candidateKeys) {
       const raw = toCleanString(value[key]);
-      if (raw) return raw;
+      if (raw) return resolveImageUrl(raw, "");
     }
   }
 

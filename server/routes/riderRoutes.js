@@ -1,4 +1,5 @@
 import express from "express";
+import { Op } from "sequelize";
 import { Order, Rider, User } from "../models/index.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { assignRider } from "../utils/assignRider.js";
@@ -19,10 +20,12 @@ router.get("/orders", verifyToken, riderOnly, async (req, res) => {
   const orders = await Order.findAll({
     where: {
       riderId: req.rider.id,
-      status: "out_for_delivery",
+      status: {
+        [Op.in]: ["out_for_delivery"],
+      },
     },
     include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }],
-    order: [["assignedAt", "ASC"]],
+    order: [["assigned_at", "ASC"]],
   });
 
   res.json(orders.map((order) => serializeOrder(order)));
