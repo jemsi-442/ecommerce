@@ -10,7 +10,17 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-const getClientBaseUrl = () => (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+const getClientBaseUrl = () => {
+  const explicit = String(process.env.CLIENT_URL || "").trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const fromList = String(process.env.CLIENT_URLS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .find(Boolean);
+
+  return (fromList || "http://localhost:5173").replace(/\/$/, "");
+};
 const normalizeEmail = (value = "") => String(value).trim().toLowerCase();
 const normalizeName = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const isValidEmail = (value = "") => EMAIL_REGEX.test(normalizeEmail(value));

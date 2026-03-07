@@ -67,6 +67,10 @@ const validateProductionEnv = () => {
     throw new Error("JWT_SECRET is missing or still using a placeholder value");
   }
 
+  if (!process.env.CLIENT_URL && !process.env.CLIENT_URLS) {
+    throw new Error("CLIENT_URL or CLIENT_URLS must be set for production");
+  }
+
   if (
     process.env.AUTO_BOOTSTRAP_ADMIN !== "false" &&
     (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === "Jay442tx")
