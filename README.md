@@ -53,6 +53,13 @@ DB_SYNC_ALTER=true
 CLOUDINARY_NAME=replace_with_cloudinary_cloud_name
 CLOUDINARY_API_KEY=replace_with_cloudinary_api_key
 CLOUDINARY_API_SECRET=replace_with_cloudinary_api_secret
+APP_NAME=RihanCollection
+MAIL_FROM=RihanCollection <no-reply@example.com>
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
 CLIENT_URL=http://localhost:5173
 CLIENT_URLS=http://localhost:5173,http://127.0.0.1:5173
 ```
@@ -109,6 +116,8 @@ Frontend default URL: `http://localhost:5173`
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
 - `GET /api/products`
 - `POST /api/orders`
 - `PUT /api/orders/:id/pay`
@@ -136,9 +145,16 @@ Required env vars on Render:
 - `CLOUDINARY_NAME=...`
 - `CLOUDINARY_API_KEY=...`
 - `CLOUDINARY_API_SECRET=...`
+- `MAIL_FROM=...`
+- `SMTP_HOST=...`
+- `SMTP_PORT=587`
+- `SMTP_SECURE=false`
+- `SMTP_USER=...`
+- `SMTP_PASS=...`
 
 ## Notes by JAYFOUR
 
 - Do not commit real secrets in `.env`.
 - Keep `server/.env` ignored in git.
 - Local uploads are stored in `server/uploads/` when Cloudinary is not configured.
+- Forgot-password emails use SMTP in production; without SMTP the reset link is only exposed in local development.

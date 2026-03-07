@@ -20,6 +20,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import { riderAutoTimeout } from "./jobs/riderTimeout.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { isCloudinaryConfigured } from "./middleware/uploadMiddleware.js";
+import { isSmtpConfigured } from "./utils/mailer.js";
 import { ensureAdminAccount } from "./utils/createAdmin.js";
 
 const app = express();
@@ -75,6 +76,10 @@ const validateProductionEnv = () => {
 
   if (!isCloudinaryConfigured()) {
     console.warn(" Cloudinary is not configured. Production will fall back to local uploads, which is not recommended.");
+  }
+
+  if (!isSmtpConfigured()) {
+    console.warn(" SMTP is not configured. Forgot-password emails will not be delivered in production.");
   }
 };
 

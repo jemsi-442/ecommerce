@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import api from "../utils/axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -7,6 +8,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -98,14 +100,24 @@ export default function Login() {
 
             <div>
               <label className="block mb-1 text-sm font-medium text-slate-700">Password</label>
-              <input
-                type="password"
-                placeholder="Your password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Your password"
+                  className="input pr-12"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-3 text-slate-500"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -115,6 +127,12 @@ export default function Login() {
               {loading ? "Ingia..." : "Login"}
             </button>
           </form>
+
+          <p className="mt-4 text-right text-sm">
+            <Link to="/forgot-password" className="font-semibold text-rose-600 hover:text-rose-700">
+              Forgot password?
+            </Link>
+          </p>
 
           <p className="text-center mt-5 text-sm text-slate-600">
             Huna account?{" "}
