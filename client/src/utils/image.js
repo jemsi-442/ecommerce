@@ -1,5 +1,6 @@
 const PLACEHOLDER = "/images/placeholder-bag.svg";
-const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(/\/api\/?$/, "");
+const PRODUCTION_API_URL = "https://perceptive-enthusiasm-production-9455.up.railway.app/api";
+const API_ORIGIN = (import.meta.env.VITE_API_URL || PRODUCTION_API_URL).replace(/\/api\/?$/, "");
 
 const candidateKeys = [
   "url",

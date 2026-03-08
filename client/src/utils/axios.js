@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Base URL fallback to localhost for dev
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const PRODUCTION_API_URL = "https://perceptive-enthusiasm-production-9455.up.railway.app/api";
+const baseURL = import.meta.env.VITE_API_URL || PRODUCTION_API_URL;
 
 const instance = axios.create({
   baseURL,
