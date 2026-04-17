@@ -7,25 +7,59 @@ const extractBearerToken = (authorizationHeader = "") => {
   return authorizationHeader.split(" ")[1];
 };
 
+const loadAuthenticatedUser = async (authorizationHeader = "") => {
+  const token = extractBearerToken(authorizationHeader);
+  if (!token) {
+    return { token: null, user: null };
+  }
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const user = await User.findByPk(decoded.id);
+
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
+
+  if (!user.active) {
+    throw new Error("ACCOUNT_SUSPENDED");
+  }
+
+  return { token, user: serializeUser(user) };
+};
+
 export const protect = async (req, res, next) => {
   try {
-    const token = extractBearerToken(req.headers.authorization || "");
+    const { token, user } = await loadAuthenticatedUser(req.headers.authorization || "");
     if (!token) {
       return res.status(401).json({ success: false, message: "No token provided", data: null });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
+    req.user = user;
+    next();
+  } catch (error) {
+    if (error.message === "ACCOUNT_SUSPENDED") {
+      return res.status(403).json({ success: false, message: "Account suspended", data: null });
+    }
 
-    if (!user) {
+    if (error.message === "USER_NOT_FOUND") {
       return res.status(401).json({ success: false, message: "User not found", data: null });
     }
 
-    req.user = serializeUser(user);
-    next();
-  } catch (error) {
     return res.status(401).json({ success: false, message: "Invalid token", data: null });
   }
+};
+
+export const optionalProtect = async (req, res, next) => {
+  try {
+    const { user } = await loadAuthenticatedUser(req.headers.authorization || "");
+    if (user) {
+      req.user = user;
+    }
+  } catch (error) {
+    req.user = null;
+  }
+
+  next();
 };
 
 export const requireRole = (...roles) => (req, res, next) => {

@@ -15,7 +15,7 @@ const ensureTestCustomer = async () => {
   if (user) {
     user.name = name;
     user.password = password;
-    user.role = "user";
+    user.role = "customer";
     user.active = true;
     await user.save();
     return user;
@@ -25,7 +25,7 @@ const ensureTestCustomer = async () => {
     name,
     email,
     password,
-    role: "user",
+    role: "customer",
     active: true,
   });
 

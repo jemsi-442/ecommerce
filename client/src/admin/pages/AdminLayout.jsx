@@ -1,51 +1,77 @@
-import { Outlet, Navigate, NavLink } from "react-router-dom";
-import { FiHome, FiPackage, FiShoppingBag, FiUsers, FiBell } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { Outlet, Navigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import AdminTopbar from "./AdminTopbar";
+import InternalFooter from "../../components/InternalFooter";
 import { useAuth } from "../../hooks/useAuth";
-
-const mobileNav = [
-  { to: "/admin", label: "Dash", icon: FiHome },
-  { to: "/admin/products", label: "Products", icon: FiPackage },
-  { to: "/admin/orders", label: "Orders", icon: FiShoppingBag },
-  { to: "/admin/users", label: "Users", icon: FiUsers },
-  { to: "/admin/notifications", label: "Alerts", icon: FiBell },
-];
+import useNotificationAlerts from "../../hooks/useNotificationAlerts";
+import useNotificationPreferences from "../../hooks/useNotificationPreferences";
+import useNotificationSummary from "../../hooks/useNotificationSummary";
 
 export default function AdminLayout() {
   const { user } = useAuth();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const notificationPreferences = useNotificationPreferences("admin");
+  const notificationSummary = useNotificationSummary({
+    enabled: user?.role === "admin",
+    mode: "admin",
+  });
+  const { unreadCount } = notificationSummary;
+
+  useNotificationAlerts({
+    enabled: user?.role === "admin",
+    mode: "admin",
+    soundEnabled: notificationPreferences.soundEnabled,
+    vibrationEnabled: notificationPreferences.vibrationEnabled,
+  });
+
+  useEffect(() => {
+    if (!mobileSidebarOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileSidebarOpen]);
+
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="flex min-h-screen bg-slate-100 overflow-hidden">
-      <AdminSidebar className="hidden lg:flex" />
-      <div className="flex-1 flex flex-col min-w-0">
-        <AdminTopbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6 bg-[linear-gradient(160deg,#f8fafc_0%,#f1f5f9_100%)]">
+    <div className="flex min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#ecfdf5_38%,#fff7ed_100%)]">
+      <AdminSidebar className="hidden lg:flex" unreadCount={unreadCount} />
+
+      {mobileSidebarOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+            aria-label="Close sidebar overlay"
+          />
+          <AdminSidebar
+            mobile
+            unreadCount={unreadCount}
+            onNavigate={() => setMobileSidebarOpen(false)}
+            onClose={() => setMobileSidebarOpen(false)}
+            className="relative z-10 min-h-full shadow-2xl"
+          />
+        </div>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminTopbar
+          unreadCount={unreadCount}
+          onOpenSidebar={() => setMobileSidebarOpen(true)}
+        />
+        <main className="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#f8fafc_0%,#f0fdf4_45%,#fff7ed_100%)] p-4 pb-6 md:p-6">
           <Outlet />
         </main>
+        <InternalFooter />
       </div>
-
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40">
-        <div className="grid grid-cols-4">
-          {mobileNav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/admin"}
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center py-2 text-xs ${isActive ? "text-rose-600" : "text-slate-500"}`
-                }
-              >
-                <Icon size={16} />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 }

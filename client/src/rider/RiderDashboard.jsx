@@ -46,9 +46,10 @@ export default function RiderDashboard() {
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h1 className="text-2xl font-black text-slate-900">My Deliveries</h1>
-        <p className="text-slate-500 mt-1">Orders assigned to you right now.</p>
+      <div className="overflow-hidden rounded-[28px] border border-amber-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_45%,#fff1f2_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-400">Rider Workspace</p>
+        <h1 className="mt-1 text-2xl font-black text-slate-900">My Deliveries</h1>
+        <p className="mt-1 text-slate-500">Orders assigned to you right now.</p>
       </div>
 
       {error ? <PageState tone="error" title="Deliveries unavailable" description={error} /> : null}

@@ -40,7 +40,7 @@ const AuditLog = sequelize.define(
       field: "rider_name",
     },
     type: {
-      type: DataTypes.ENUM("status", "delivery", "notification", "refund", "user"),
+      type: DataTypes.ENUM("status", "delivery", "notification", "refund", "user", "payment"),
       allowNull: false,
     },
     action: {

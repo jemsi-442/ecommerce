@@ -34,7 +34,7 @@ export const sendPasswordResetEmail = async ({ to, resetUrl, appName }) => {
     throw new Error("SMTP is not configured");
   }
 
-  const brand = appName || process.env.APP_NAME || "RihanCollection";
+  const brand = appName || process.env.APP_NAME || "Ecommerce";
 
   await getTransporter().sendMail({
     from: process.env.MAIL_FROM,

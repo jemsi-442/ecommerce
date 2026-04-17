@@ -12,6 +12,9 @@ const riderOnly = async (req, res, next) => {
   if (!rider) {
     return res.status(403).json({ message: "Rider access only" });
   }
+  if (!rider.isActive) {
+    return res.status(403).json({ message: "Rider account is inactive" });
+  }
   req.rider = rider;
   next();
 };

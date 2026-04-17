@@ -1,32 +1,57 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { FiHome, FiShoppingBag, FiPackage, FiUsers, FiBell, FiLogOut } from "react-icons/fi";
+import { FiBell, FiCreditCard, FiHome, FiLogOut, FiPackage, FiShoppingBag, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
-  { name: "Dashboard", path: "/admin", icon: FiHome },
-  { name: "Products", path: "/admin/products", icon: FiPackage },
-  { name: "Orders", path: "/admin/orders", icon: FiShoppingBag },
-  { name: "Users", path: "/admin/users", icon: FiUsers },
-  { name: "Notifications", path: "/admin/notifications", icon: FiBell },
+  { name: "Marketplace Home", path: "/admin", icon: FiHome },
+  { name: "Catalog", path: "/admin/products", icon: FiPackage },
+  { name: "Sales", path: "/admin/orders", icon: FiShoppingBag },
+  { name: "Customers", path: "/admin/users", icon: FiUsers },
+  { name: "Updates", path: "/admin/notifications", icon: FiBell },
+  { name: "Vendor Settlements", path: "/admin/payouts", icon: FiCreditCard },
 ];
 
-export default function AdminSidebar({ className = "" }) {
+export default function AdminSidebar({
+  className = "",
+  unreadCount = 0,
+  mobile = false,
+  onNavigate,
+  onClose,
+}) {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   const onLogout = () => {
     logout();
     navigate("/login");
+    onNavigate?.();
   };
 
   return (
-    <aside className={`w-72 min-h-screen flex flex-col border-r border-slate-200 bg-[linear-gradient(180deg,#0f172a_0%,#111827_100%)] text-slate-200 ${className}`}>
-      <div className="px-6 py-6 border-b border-white/10">
-        <h1 className="text-xl font-black text-white">Rihan <span className="text-rose-400">Admin</span></h1>
-        <p className="text-xs text-slate-400 mt-1 tracking-wide">Control Center</p>
+    <aside className={`flex min-h-screen w-72 flex-col border-r border-emerald-950/20 bg-[linear-gradient(180deg,#052e2b_0%,#0f172a_40%,#111827_100%)] text-slate-200 ${className}`}>
+      <div className="border-b border-white/10 px-6 py-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-300/80">Seller & shopper hub</p>
+            <h1 className="mt-2 text-xl font-black text-white">
+              Ecommerce <span className="text-emerald-300">Marketplace</span>
+            </h1>
+            <p className="mt-1 text-xs tracking-wide text-slate-400">Commerce Hub</p>
+          </div>
+          {mobile ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-white/10 p-2 text-slate-300 hover:bg-white/5 lg:hidden"
+              aria-label="Close sidebar"
+            >
+              <FiX size={18} />
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1.5">
+      <nav className="flex-1 space-y-2 px-4 py-6">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -34,22 +59,35 @@ export default function AdminSidebar({ className = "" }) {
               key={item.name}
               to={item.path}
               end={item.path === "/admin"}
+              onClick={() => onNavigate?.()}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
-                  isActive ? "bg-rose-500/20 text-rose-300 border border-rose-400/20" : "text-slate-300 hover:bg-white/5"
+                `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  isActive
+                    ? "border border-emerald-300/20 bg-emerald-400/15 text-emerald-100 shadow-[0_14px_30px_rgba(16,185,129,0.12)]"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`
               }
             >
               <Icon size={18} />
-              {item.name}
+              <span className="flex items-center gap-2">
+                {item.name}
+                {item.path === "/admin/notifications" && unreadCount > 0 ? (
+                  <span className="rounded-full bg-[linear-gradient(135deg,#f59e0b_0%,#f97316_100%)] px-2 py-0.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                    {unreadCount}
+                  </span>
+                ) : null}
+              </span>
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-white/10">
-        <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 transition">
-          <FiLogOut size={18} /> Logout
+      <div className="border-t border-white/10 px-4 py-4">
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
+        >
+          <FiLogOut size={18} /> Sign out
         </button>
       </div>
     </aside>

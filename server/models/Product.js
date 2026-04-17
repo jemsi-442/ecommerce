@@ -62,6 +62,24 @@ const Product = sequelize.define(
       defaultValue: null,
       field: "approved_by",
     },
+    reviewedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: "reviewed_at",
+    },
+    reviewedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      field: "reviewed_by",
+    },
+    reviewNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: "review_notes",
+    },
     createdBy: {
       type: DataTypes.INTEGER,
       allowNull: true,

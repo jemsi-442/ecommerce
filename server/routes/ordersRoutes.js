@@ -5,6 +5,8 @@ import {
   updateOrderStatus,
   getMyOrders,
   getAllOrders,
+  refreshOrderPaymentStatus,
+  retryOrderPaymentPush,
 } from "../controllers/ordersController.js";
 import { verifyToken, adminMiddleware } from "../middleware/authMiddleware.js";
 
@@ -15,6 +17,8 @@ router.post("/", verifyToken, createOrder);
 router.get("/my", verifyToken, getMyOrders);
 router.get("/my-orders", verifyToken, getMyOrders);
 router.put("/:id/pay", verifyToken, markAsPaid);
+router.get("/:id/payment-status", verifyToken, refreshOrderPaymentStatus);
+router.post("/:id/payment-push", verifyToken, retryOrderPaymentPush);
 
 // ADMIN
 router.get("/", verifyToken, adminMiddleware, getAllOrders);

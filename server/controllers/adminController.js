@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import { Order, Notification, User, Rider } from "../models/index.js";
+import { createNotificationRecord } from "../utils/createNotificationRecord.js";
 import { serializeOrder } from "../utils/serializers.js";
 
 // GET /admin/audit?status=&rider=&date=
@@ -25,7 +26,9 @@ export const getAuditLogs = async (req, res) => {
       ],
     });
 
-    const notifications = await Notification.findAll();
+    const notifications = await Notification.findAll({
+      where: { audience: "admin" },
+    });
 
     const logs = [];
 
@@ -50,7 +53,11 @@ export const getAuditLogs = async (req, res) => {
         userName: n.customerName,
         riderName: n.riderName || null,
         type: "notification",
+        notificationType: n.type,
+        audience: n.audience,
         message: n.message,
+        status: n.status || "logged",
+        read: Boolean(n.read),
         createdAt: n.createdAt,
       });
     });
@@ -75,12 +82,14 @@ export const sendNotification = async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    const notification = await Notification.create({
+    const notification = await createNotificationRecord({
       orderId,
+      audience: "customer",
       customerName: order.user?.name || null,
       type: "SMS",
       message: `Your order ${String(order.id).slice(-5)} is ${order.status}`,
       status: "sent",
+      userId: order.user?.id || null,
     });
 
     res.json({ message: "Notification sent", notification });

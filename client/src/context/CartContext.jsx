@@ -2,7 +2,7 @@ import { createContext, useEffect, useMemo, useState } from "react";
 
 export const CartContext = createContext();
 
-const CART_STORAGE_KEY = "rihan_cart";
+const CART_STORAGE_KEY = "ecommerce_cart";
 
 const makeCartItemId = (productId, variantId) =>
   `${productId}:${variantId || "default"}`;
@@ -11,7 +11,12 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem(CART_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) {
+        return [];
+      }
+
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }

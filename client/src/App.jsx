@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import UserLayout from "./components/UserLayout";
 import AdminLayout from "./admin/pages/AdminLayout";
 import RiderLayout from "./rider/RiderLayout";
+import VendorLayout from "./vendor/VendorLayout";
 
 /* Route guards */
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -20,15 +21,22 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Storefront = lazy(() => import("./pages/Storefront"));
 
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const AdminOrders = lazy(() => import("./admin/pages/AdminOrders"));
 const AdminProducts = lazy(() => import("./admin/pages/AdminProducts"));
 const AdminUsers = lazy(() => import("./admin/pages/AdminUsers"));
 const AdminNotifications = lazy(() => import("./admin/pages/AdminNotifications"));
+const AdminPayouts = lazy(() => import("./admin/pages/AdminPayouts"));
 
 const RiderDashboard = lazy(() => import("./rider/RiderDashboard"));
 const RiderOrders = lazy(() => import("./rider/RiderOrders"));
+const VendorDashboard = lazy(() => import("./vendor/VendorDashboard"));
+const VendorProducts = lazy(() => import("./vendor/VendorProducts"));
+const VendorOrders = lazy(() => import("./vendor/VendorOrders"));
+const VendorProfile = lazy(() => import("./vendor/VendorProfile"));
+const VendorPayouts = lazy(() => import("./vendor/VendorPayouts"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -37,7 +45,7 @@ export default function App() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-slate-500">
-          Inapakia...
+          Loading...
         </div>
       }
     >
@@ -80,9 +88,17 @@ export default function App() {
             }
           />
           <Route
+            path="account"
+            element={
+              <ProtectedRoute allowedRoles={["customer"]}>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="orders"
             element={
-              <ProtectedRoute allowedRoles={["user", "admin", "rider"]}>
+              <ProtectedRoute allowedRoles={["customer", "admin", "rider"]}>
                 <Orders />
               </ProtectedRoute>
             }
@@ -91,6 +107,7 @@ export default function App() {
           <Route path="register" element={<Register />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="stores/:slug" element={<Storefront />} />
         </Route>
 
         {/* ADMIN */}
@@ -107,6 +124,24 @@ export default function App() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="payouts" element={<AdminPayouts />} />
+        </Route>
+
+
+        {/* VENDOR */}
+        <Route
+          path="vendor"
+          element={
+            <ProtectedRoute allowedRoles={["vendor"]}>
+              <VendorLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<VendorDashboard />} />
+          <Route path="products" element={<VendorProducts />} />
+          <Route path="orders" element={<VendorOrders />} />
+          <Route path="profile" element={<VendorProfile />} />
+          <Route path="payouts" element={<VendorPayouts />} />
         </Route>
 
         {/* RIDER */}

@@ -3,12 +3,34 @@ import { Sequelize } from "sequelize";
 
 dotenv.config();
 const isProduction = process.env.NODE_ENV === "production";
-const shouldSync = process.env.DB_SYNC !== "false";
+const shouldSync = !isProduction && process.env.DB_SYNC === "true";
 const shouldAlter =
-  process.env.DB_SYNC_ALTER === "true" ||
-  (!isProduction && process.env.DB_SYNC_ALTER !== "false");
+  shouldSync &&
+  (process.env.DB_SYNC_ALTER === "true" ||
+    (!isProduction && process.env.DB_SYNC_ALTER !== "false"));
 
-const databaseUrl = process.env.DATABASE_URL || process.env.MARIADB_URL || null;
+const isTemplateValue = (value = "") =>
+  !value || value.includes("${{") || value.startsWith("replace_with_") || value.includes("<");
+
+const resolveDatabaseUrl = (...candidates) => {
+  for (const candidate of candidates) {
+    const value = String(candidate || "").trim();
+    if (isTemplateValue(value)) continue;
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol) {
+        return value;
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  return null;
+};
+
+const databaseUrl = resolveDatabaseUrl(process.env.DATABASE_URL, process.env.MARIADB_URL);
 
 const sequelize = databaseUrl
   ? new Sequelize(databaseUrl, {

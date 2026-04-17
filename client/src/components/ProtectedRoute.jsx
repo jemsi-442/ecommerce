@@ -5,6 +5,8 @@ import { useAuth } from "../hooks/useAuth";
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user } = useAuth();
   const location = useLocation();
+  const normalizedRole = user?.role === "user" ? "customer" : user?.role;
+  const normalizedAllowedRoles = allowedRoles.map((role) => (role === "user" ? "customer" : role));
 
   if (user === undefined) {
     return (
@@ -21,13 +23,13 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         replace
         state={{
           from: location,
-          message: "Tafadhali jisajili au login kwanza ili uingie kwenye shop.",
+          message: "Please register or log in first to continue to the shop.",
         }}
       />
     );
   }
 
-  if (allowedRoles.length && !allowedRoles.includes(user.role)) {
+  if (allowedRoles.length && !normalizedAllowedRoles.includes(normalizedRole)) {
     return <Navigate to="/" replace />;
   }
 

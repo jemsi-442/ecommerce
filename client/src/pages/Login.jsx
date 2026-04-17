@@ -44,11 +44,14 @@ export default function Login() {
         case "rider":
           navigate("/rider", { replace: true });
           break;
+        case "vendor":
+          navigate("/vendor", { replace: true });
+          break;
         default:
           navigate("/shop", { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Email au password sio sahihi.");
+      setError(err.response?.data?.message || "Incorrect email or password.");
     } finally {
       setLoading(false);
     }
@@ -59,9 +62,9 @@ export default function Login() {
       <div className="max-w-5xl mx-auto grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/30">
         <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.35),transparent_45%),#0f172a] p-10 text-white">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">RihanCollection</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">Ecommerce</p>
             <h1 className="mt-4 text-4xl font-black leading-tight">Secure Access To Premium Shop</h1>
-            <p className="mt-4 text-slate-300">Login kwanza ili upate product catalog, cart, checkout, na order tracking.</p>
+            <p className="mt-4 text-slate-300">Log in to access the product catalog, cart, checkout, and order tracking.</p>
           </div>
           <p className="text-sm text-slate-400">Commerce platform with role-based access and modern delivery workflow.</p>
         </aside>
@@ -73,7 +76,7 @@ export default function Login() {
           className="bg-white p-6 md:p-10"
         >
           <h2 className="text-3xl font-black text-slate-900">Welcome Back</h2>
-          <p className="mt-1 text-slate-500">Ingia kwenye account yako uendelee na shopping.</p>
+          <p className="mt-1 text-slate-500">Sign in to continue shopping.</p>
 
           {infoMessage && (
             <p className="mt-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-700">
@@ -124,7 +127,7 @@ export default function Login() {
               disabled={loading}
               className="w-full btn-primary rounded-xl py-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Ingia..." : "Login"}
+              {loading ? "Signing in..." : "Login"}
             </button>
           </form>
 
@@ -135,9 +138,9 @@ export default function Login() {
           </p>
 
           <p className="text-center mt-5 text-sm text-slate-600">
-            Huna account?{" "}
+            Don't have an account?{" "}
             <Link to="/register" className="font-semibold text-rose-600 hover:text-rose-700">
-              Jisajili
+              Register
             </Link>
           </p>
         </motion.div>

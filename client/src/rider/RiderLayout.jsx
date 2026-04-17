@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { FiHome, FiTruck, FiLogOut } from "react-icons/fi";
+import InternalFooter from "../components/InternalFooter";
 import { useAuth } from "../hooks/useAuth";
 
 export default function RiderLayout() {
@@ -31,9 +32,12 @@ export default function RiderLayout() {
         </button>
       </aside>
 
-      <main className="flex-1 p-4 md:p-6">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 min-w-0 flex-col">
+        <main className="flex-1 bg-[linear-gradient(160deg,#fffaf5_0%,#f8fafc_52%,#eef2ff_100%)] p-4 md:p-6">
+          <Outlet />
+        </main>
+        <InternalFooter />
+      </div>
     </div>
   );
 }

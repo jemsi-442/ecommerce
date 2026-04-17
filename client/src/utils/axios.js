@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const PRODUCTION_API_URL = "https://perceptive-enthusiasm-production-9455.up.railway.app/api";
-const baseURL = import.meta.env.VITE_API_URL || PRODUCTION_API_URL;
+export const apiBaseUrl = import.meta.env.VITE_API_URL || PRODUCTION_API_URL;
 
 const instance = axios.create({
-  baseURL,
+  baseURL: apiBaseUrl,
   withCredentials: true, // optional if backend uses cookies
 });
 

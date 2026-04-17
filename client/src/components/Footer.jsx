@@ -10,10 +10,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid md:grid-cols-3 gap-8 md:gap-12">
         <div>
           <h3 className="text-2xl font-black tracking-tight text-white">
-            Rihan<span className="text-rose-400">Collection</span>
+            Ecom<span className="text-rose-400">merce</span>
           </h3>
           <p className="mt-3 text-slate-300 leading-relaxed">
-            Premium shopping experience kwa wanawake wa kisasa. Quality products, secure checkout, na delivery ya uhakika.
+            A modern shopping experience with quality products, secure checkout, and reliable delivery.
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export default function Footer() {
         <div>
           <h4 className="text-sm uppercase tracking-[0.2em] text-rose-300 mb-4">Contact</h4>
           <ul className="space-y-3 text-slate-300">
-            <li className="flex items-center gap-2"><FiMail className="text-rose-300" /> support@rihancollection.com</li>
+            <li className="flex items-center gap-2"><FiMail className="text-rose-300" /> support@ecommerce.com</li>
             <li className="flex items-center gap-2"><FiPhone className="text-rose-300" /> +255 713 551 801</li>
             <li className="flex items-center gap-2"><FiMapPin className="text-rose-300" /> Dar es Salaam, Tanzania</li>
           </ul>
@@ -47,7 +47,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-white/10 py-4 text-center text-sm text-slate-400">
-        &copy; {new Date().getFullYear()} RihanCollection. All rights reserved.
+        &copy; {new Date().getFullYear()} Ecommerce. All rights reserved.
       </div>
     </footer>
   );

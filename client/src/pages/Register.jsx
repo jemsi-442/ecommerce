@@ -49,11 +49,14 @@ export default function Register() {
         case "rider":
           navigate("/rider", { replace: true });
           break;
+        case "vendor":
+          navigate("/vendor", { replace: true });
+          break;
         default:
           navigate("/shop", { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Imeshindikana kusajili account.");
+      setError(err.response?.data?.message || "Failed to create account.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +69,7 @@ export default function Register() {
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-rose-200">Create Account</p>
             <h1 className="mt-4 text-4xl font-black leading-tight">Start Shopping The Right Way</h1>
-            <p className="mt-4 text-slate-300">Baada ya kusajili na login, utapata access ya full shop, cart na order history.</p>
+            <p className="mt-4 text-slate-300">After registering and logging in, you will get full access to the shop, cart, and order history.</p>
           </div>
           <p className="text-sm text-slate-400">Built for secure user-first commerce workflow.</p>
         </aside>
@@ -78,7 +81,7 @@ export default function Register() {
           className="bg-white p-6 md:p-10"
         >
           <h2 className="text-3xl font-black text-slate-900">Create Your Account</h2>
-          <p className="mt-1 text-slate-500">Jaza taarifa zako kisha uende shop moja kwa moja.</p>
+          <p className="mt-1 text-slate-500">Create your account and continue directly to the shop.</p>
 
           {error && (
             <p className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
@@ -157,12 +160,12 @@ export default function Register() {
               disabled={loading}
               className="w-full btn-primary rounded-xl py-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Inatengeneza account..." : "Create Account"}
+              {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
 
           <p className="text-center mt-5 text-sm text-slate-600">
-            Tayari una account?{" "}
+            Already have an account?{" "}
             <Link to="/login" className="font-semibold text-rose-600 hover:text-rose-700">
               Login
             </Link>

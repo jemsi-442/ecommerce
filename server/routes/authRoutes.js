@@ -150,7 +150,7 @@ router.post("/forgot-password", forgotPasswordRateLimiter, async (req, res) => {
       await sendPasswordResetEmail({
         to: email,
         resetUrl,
-        appName: process.env.APP_NAME || "RihanCollection",
+        appName: process.env.APP_NAME || "Ecommerce",
       });
 
       return res.json({

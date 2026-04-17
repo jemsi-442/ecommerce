@@ -48,6 +48,9 @@ export const errorHandler = (err, req, res, next) => {
       method: req.method,
       path: req.originalUrl,
       userId: req.user?._id || null,
+      errorName: err.name || null,
+      errorDetail: err.message || null,
+      errorStack: err.stack || null,
       timestamp: new Date().toISOString(),
     })
   );

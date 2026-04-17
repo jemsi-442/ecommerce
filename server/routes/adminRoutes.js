@@ -4,13 +4,20 @@ import {
   getAuditLogs,
   sendNotification,
 } from "../controllers/adminController.js";
+import {
+  createVendorPayoutRecord,
+  exportAdminVendorPayoutsCsv,
+  getAdminVendorPayouts,
+  updateVendorPayoutRecord,
+} from "../controllers/vendorPayoutController.js";
 
 const router = express.Router();
 
-//  Audit logs endpoint
 router.get("/audit", verifyToken, adminMiddleware, getAuditLogs);
-
-// Optional: manually trigger notification
 router.post("/notifications/send", verifyToken, adminMiddleware, sendNotification);
+router.get("/vendor-payouts/export.csv", verifyToken, adminMiddleware, exportAdminVendorPayoutsCsv);
+router.get("/vendor-payouts", verifyToken, adminMiddleware, getAdminVendorPayouts);
+router.post("/vendor-payouts", verifyToken, adminMiddleware, createVendorPayoutRecord);
+router.put("/vendor-payouts/:id", verifyToken, adminMiddleware, updateVendorPayoutRecord);
 
 export default router;

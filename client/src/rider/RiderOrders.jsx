@@ -62,7 +62,10 @@ const RiderOrders = () => {
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-black text-slate-900">Assigned Deliveries</h2>
+      <div className="overflow-hidden rounded-[28px] border border-indigo-100 bg-[linear-gradient(135deg,#eef2ff_0%,#ffffff_48%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-indigo-400">Active Queue</p>
+        <h2 className="mt-1 text-2xl font-black text-slate-900">Assigned Deliveries</h2>
+      </div>
 
       {orders.map((order) => {
         const accepted = Boolean(order.delivery?.acceptedAt);

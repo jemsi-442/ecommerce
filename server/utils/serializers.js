@@ -12,6 +12,18 @@ export const serializeUser = (row, { includePassword = false } = {}) => {
     _id: user.id,
   };
 
+  if (out.role === "user") {
+    out.role = "customer";
+  }
+
+  out.savedProductIds = Array.isArray(user.savedProductIds)
+    ? user.savedProductIds.map((entry) => Number(entry)).filter((entry) => Number.isInteger(entry) && entry > 0)
+    : [];
+
+  out.favoriteStoreSlugs = Array.isArray(user.favoriteStoreSlugs)
+    ? user.favoriteStoreSlugs.map((entry) => String(entry).trim().toLowerCase()).filter(Boolean)
+    : [];
+
   if (!includePassword) {
     delete out.password;
   }
@@ -24,6 +36,25 @@ export const serializeProduct = (row) => {
   if (!product) return null;
 
   const imageUrl = product.image || null;
+  const creator = product.creator
+    ? {
+        _id: product.creator.id,
+        id: product.creator.id,
+        name: product.creator.name,
+        role: product.creator.role === "user" ? "customer" : product.creator.role,
+        storeName: product.creator.storeName || null,
+        storeSlug: product.creator.storeSlug || null,
+      }
+    : null;
+
+  const reviewer = product.reviewer
+    ? {
+        _id: product.reviewer.id,
+        id: product.reviewer.id,
+        name: product.reviewer.name,
+        role: product.reviewer.role === "user" ? "customer" : product.reviewer.role,
+      }
+    : null;
 
   return {
     ...product,
@@ -31,6 +62,11 @@ export const serializeProduct = (row) => {
     price: Number(product.price),
     imageUrl,
     images: imageUrl ? [{ url: imageUrl, publicId: null }] : [],
+    reviewNotes: product.reviewNotes || product.review_notes || null,
+    reviewedAt: product.reviewedAt || product.reviewed_at || null,
+    reviewedBy: product.reviewedBy || product.reviewed_by || reviewer?.id || null,
+    vendor: creator,
+    reviewer,
   };
 };
 
@@ -41,6 +77,7 @@ export const serializeOrder = (row) => {
   const user = order.user
     ? {
         ...order.user,
+        role: order.user.role === "user" ? "customer" : order.user.role,
         _id: order.user.id,
       }
     : undefined;
@@ -83,6 +120,17 @@ export const serializeOrder = (row) => {
       assignedAt: order.assignedAt,
       acceptedAt: order.acceptedAt,
       completedAt: order.completedAt,
+    },
+    payment: {
+      method: order.paymentMethod || "mobile_money",
+      provider: order.paymentProvider || null,
+      reference: order.paymentReference || null,
+      status: order.paymentStatus || (order.isPaid ? "completed" : null),
+      expiresAt: order.paymentExpiresAt || null,
+      failedAt: order.paymentFailedAt || null,
+      failureReason: order.paymentFailureReason || null,
+      isPaid: Boolean(order.isPaid),
+      paidAt: order.paidAt || null,
     },
   };
 };

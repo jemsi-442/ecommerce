@@ -27,7 +27,7 @@ export default function CartSummary() {
       <hr className="my-3" />
 
       <div className="flex justify-between font-bold">
-        <span>Jumla</span>
+        <span>Total</span>
         <span className="text-primary">TZS {total}</span>
       </div>
     </div>

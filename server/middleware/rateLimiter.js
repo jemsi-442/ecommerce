@@ -1,5 +1,9 @@
 const buckets = new Map();
 
+export const resetRateLimitBuckets = () => {
+  buckets.clear();
+};
+
 export const rateLimit = ({ windowMs, max, keyGenerator }) => (req, res, next) => {
   const key = keyGenerator ? keyGenerator(req) : req.ip;
   const now = Date.now();

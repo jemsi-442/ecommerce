@@ -77,8 +77,50 @@ const Order = sequelize.define(
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "cash_on_delivery",
+      defaultValue: "mobile_money",
       field: "payment_method",
+    },
+    paymentProvider: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_provider",
+    },
+    paymentReference: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_reference",
+    },
+    paymentStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_status",
+    },
+    paymentExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_expires_at",
+    },
+    paymentFailedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_failed_at",
+    },
+    paymentFailureReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: "payment_failure_reason",
+    },
+    inventoryReserved: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: "inventory_reserved",
     },
     isPaid: {
       type: DataTypes.BOOLEAN,

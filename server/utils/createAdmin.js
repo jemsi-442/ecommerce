@@ -4,7 +4,7 @@ import User from "../models/User.js";
 
 dotenv.config();
 
-export const ensureAdminAccount = async () => {
+export const ensureAdminAccount = async ({ resetExisting = false } = {}) => {
   const email = process.env.ADMIN_EMAIL || "admin@ramla.com";
   const password = process.env.ADMIN_PASSWORD || "Jay442tx";
   const name = process.env.ADMIN_NAME || "Ramla Admin";
@@ -12,6 +12,22 @@ export const ensureAdminAccount = async () => {
   const existing = await User.findOne({ where: { email } });
 
   if (existing) {
+    if (!resetExisting) {
+      if (existing.role !== "admin") {
+        throw new Error(
+          "Configured admin email already belongs to a non-admin user. Refusing automatic privilege escalation."
+        );
+      }
+
+      if (!existing.active) {
+        throw new Error(
+          "Configured admin account is inactive. Re-enable it manually or run the create-admin script."
+        );
+      }
+
+      return { created: false, email };
+    }
+
     existing.name = name;
     existing.password = password;
     existing.role = "admin";
@@ -34,7 +50,7 @@ export const ensureAdminAccount = async () => {
 const run = async () => {
   try {
     await connectDB();
-    const result = await ensureAdminAccount();
+    const result = await ensureAdminAccount({ resetExisting: true });
     console.log(
       result.created
         ? `Admin created successfully for ${result.email}`

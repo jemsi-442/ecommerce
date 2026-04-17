@@ -19,6 +19,11 @@ const Notification = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    audience: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "customer",
+    },
     message: {
       type: DataTypes.TEXT,
       allowNull: false,
