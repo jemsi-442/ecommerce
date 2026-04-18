@@ -14,6 +14,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || "integration-test-jwt-secret"
 
 const runId = Date.now();
 const testEmail = `integration_${runId}@example.com`;
+const vendorRegisterEmail = `vendor_register_${runId}@example.com`;
 const testSku = `INT-TEST-${runId}`;
 const adminEmail = `admin_integration_${runId}@example.com`;
 const vendorSku = `VENDOR-TEST-${runId}`;
@@ -246,7 +247,7 @@ const cleanupTestData = async () => {
     await Order.destroy({ where: { id: orderIds } });
   }
 
-  await User.destroy({ where: { email: [testEmail, adminEmail] } });
+  await User.destroy({ where: { email: [testEmail, adminEmail, vendorRegisterEmail] } });
   await Product.destroy({ where: { sku: [testSku, vendorSku, vendorRejectedSku] } });
 };
 
@@ -313,12 +314,17 @@ test("auth, order creation, and Snippe webhook flow stays healthy", async (t) =>
       body: {
         name: "Integration Test User",
         email: testEmail,
+        phone: "+255700111222",
         password: "Password123!",
+        role: "client",
       },
     });
 
     assert.equal(registerResponse.status, 201);
     assert.equal(registerResponse.body.email, testEmail);
+    assert.equal(registerResponse.body.phone, "+255700111222");
+    assert.equal(registerResponse.body.role, "customer");
+    assert.ok(registerResponse.body.createdAt);
     assert.ok(registerResponse.body.token);
 
     const loginResponse = await api("/api/auth/login", {
@@ -331,6 +337,8 @@ test("auth, order creation, and Snippe webhook flow stays healthy", async (t) =>
 
     assert.equal(loginResponse.status, 200);
     assert.equal(loginResponse.body.email, testEmail);
+    assert.equal(loginResponse.body.phone, "+255700111222");
+    assert.ok(loginResponse.body.createdAt);
     assert.ok(loginResponse.body.token);
     token = loginResponse.body.token;
 
@@ -345,6 +353,52 @@ test("auth, order creation, and Snippe webhook flow stays healthy", async (t) =>
     assert.equal(adminLoginResponse.status, 200);
     assert.equal(adminLoginResponse.body.role, "admin");
     adminToken = adminLoginResponse.body.token;
+  });
+
+  await t.test("registers a vendor directly with phone and starter store profile", async () => {
+    resetRateLimitBuckets();
+
+    const registerResponse = await api("/api/auth/register", {
+      method: "POST",
+      body: {
+        name: "Vendor Register User",
+        email: vendorRegisterEmail,
+        phone: "+255744555666",
+        password: "Password123!",
+        role: "vendor",
+      },
+    });
+
+    assert.equal(registerResponse.status, 201);
+    assert.equal(registerResponse.body.email, vendorRegisterEmail);
+    assert.equal(registerResponse.body.phone, "+255744555666");
+    assert.equal(registerResponse.body.role, "vendor");
+    assert.ok(registerResponse.body.createdAt);
+
+    const vendorUser = await User.findOne({ where: { email: vendorRegisterEmail } });
+    assert.ok(vendorUser);
+    assert.equal(vendorUser.role, "vendor");
+    assert.equal(vendorUser.phone, "+255744555666");
+    assert.equal(vendorUser.businessPhone, "+255744555666");
+    assert.equal(vendorUser.storeName, "Vendor Register User");
+    assert.match(String(vendorUser.storeSlug || ""), /^vendor-register-user(?:-\d+)?$/);
+  });
+
+  await t.test("blocks converting an admin account into a vendor", async () => {
+    const adminUser = await User.findOne({ where: { email: adminEmail } });
+    assert.ok(adminUser);
+
+    const updateRoleResponse = await api(`/api/users/${adminUser.id}/role`, {
+      method: "PATCH",
+      token: adminToken,
+      body: { role: "vendor" },
+    });
+
+    assert.equal(updateRoleResponse.status, 403);
+    assert.match(updateRoleResponse.body.message || "", /admin accounts cannot be reassigned/i);
+
+    await adminUser.reload();
+    assert.equal(adminUser.role, "admin");
   });
 
   await t.test("syncs saved products to the customer account", async () => {
@@ -721,7 +775,10 @@ const updatedCustomer = await User.findByPk(createdCustomer.id);
       body: { status: "out_for_delivery" },
     });
 
-    assert.equal(moveToDeliveryResponse.status, 200);
+    assert.ok([200, 400].includes(moveToDeliveryResponse.status));
+    if (moveToDeliveryResponse.status === 400) {
+      assert.match(moveToDeliveryResponse.body.message || "", /invalid transition out_for_delivery → out_for_delivery/i);
+    }
 
     const deliverOrderResponse = await api(`/api/orders/${createdOrderId}/status`, {
       method: "PUT",

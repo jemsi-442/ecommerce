@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { connectDB } from "../config/db.js";
 import { Order, OrderItem, Product, User } from "../models/index.js";
-import { assignRider } from "./assignRider.js";
+import { assignRider, getOrderVendorRiderScope } from "./assignRider.js";
 
 dotenv.config();
 
@@ -64,7 +64,8 @@ export const createTestOrder = async () => {
     price: Number(product.price),
   });
 
-  const riderId = await assignRider();
+  const vendorId = await getOrderVendorRiderScope(order.id);
+  const riderId = await assignRider({ vendorId });
 
   if (riderId) {
     order.riderId = riderId;

@@ -30,8 +30,8 @@ export default function MarketplaceRating({
         compact ? "text-xs" : "text-sm"
       } ${
         tone === "dark"
-          ? "bg-amber-200/10 text-amber-100"
-          : "bg-amber-50 text-amber-700"
+          ? "bg-orange-200/10 text-orange-100"
+          : "bg-orange-50 text-orange-700"
       }`}
     >
       <FiStar className="fill-current" />

@@ -41,7 +41,7 @@ export default function AdminLayout() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="flex min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#ecfdf5_38%,#fff7ed_100%)]">
+    <div className="flex h-screen min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eff6ff_36%,#fff7ed_100%)]">
       <AdminSidebar className="hidden lg:flex" unreadCount={unreadCount} />
 
       {mobileSidebarOpen ? (
@@ -62,12 +62,12 @@ export default function AdminLayout() {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 min-h-0 flex-1 flex-col">
         <AdminTopbar
           unreadCount={unreadCount}
           onOpenSidebar={() => setMobileSidebarOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#f8fafc_0%,#f0fdf4_45%,#fff7ed_100%)] p-4 pb-6 md:p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(160deg,#f8fafc_0%,#eff6ff_48%,#fff7ed_100%)] p-4 pb-6 md:p-6">
           <Outlet />
         </main>
         <InternalFooter />

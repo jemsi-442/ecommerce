@@ -306,6 +306,7 @@ router.put("/me/favorite-stores", verifyToken, async (req, res) => {
 router.patch("/me", verifyToken, async (req, res) => {
   const name = normalizeName(req.body?.name || "");
   const email = normalizeEmail(req.body?.email || "");
+  const phone = normalizePhone(req.body?.phone || "");
   const businessPhone = normalizePhone(req.body?.businessPhone || req.body?.phone || "");
 
   if (name.length < 2) {
@@ -329,6 +330,7 @@ router.patch("/me", verifyToken, async (req, res) => {
 
     user.name = name;
     user.email = email;
+    user.phone = phone || null;
     user.businessPhone = businessPhone || null;
     await user.save();
 
@@ -412,6 +414,7 @@ router.post("/riders", verifyToken, adminMiddleware, async (req, res) => {
       if (user) {
         user.name = name;
         user.password = password;
+        user.phone = phone;
         user.role = "rider";
         user.active = true;
         await user.save({ transaction });
@@ -420,6 +423,7 @@ router.post("/riders", verifyToken, adminMiddleware, async (req, res) => {
           {
             name,
             email,
+            phone,
             password,
             role: "rider",
             active: true,
@@ -478,6 +482,9 @@ router.patch("/:id/role", verifyToken, adminMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.role === "rider") {
       return res.status(400).json({ message: "Use the rider management flow for rider accounts" });
+    }
+    if (user.role === "admin" && role !== "admin") {
+      return res.status(403).json({ message: "Admin accounts cannot be reassigned to customer or vendor" });
     }
 
     user.role = role;

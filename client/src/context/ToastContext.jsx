@@ -6,7 +6,7 @@ const DURATION = 3000;
 
 const toneStyles = {
   success: "bg-emerald-600 text-white",
-  error: "bg-rose-600 text-white",
+  error: "bg-red-600 text-white",
   info: "bg-slate-800 text-white",
 };
 

@@ -58,7 +58,7 @@ router.get("/dashboard", protect, adminOnly, async (req, res) => {
             attributes: ["id", "name", "createdBy", "stock"],
             include: [{ model: User, as: "creator", attributes: ["id", "name", "storeName", "storeSlug"], required: false }],
           },
-          { model: Order, as: "order", attributes: ["id", "createdAt", "status", "isPaid"] },
+          { model: Order, as: "order", attributes: ["id", "created_at", "status", "isPaid"] },
         ],
       }),
       Product.findAll({
@@ -66,11 +66,14 @@ router.get("/dashboard", protect, adminOnly, async (req, res) => {
         include: [{ model: User, as: "creator", attributes: ["id", "name", "storeName", "storeSlug"], required: false }],
         order: [["stock", "ASC"], ["created_at", "DESC"]],
       }),
+      Rider.findAll({
+        order: [["created_at", "DESC"]],
+      }),
       Notification.count({ where: { audience: "admin", read: false } }),
       Notification.count({ where: { audience: "customer", read: false } }),
       NotificationEvent.count({
         where: {
-          createdAt: { [Op.gte]: lastHour },
+          created_at: { [Op.gte]: lastHour },
         },
       }),
       NotificationEvent.findOne({

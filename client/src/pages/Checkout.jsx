@@ -137,7 +137,7 @@ const Checkout = () => {
         <section className="rounded-[32px] border border-white/80 bg-white/92 p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)] md:p-7">
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-400">Secure checkout</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Secure checkout</p>
               <h1 className="mt-2 text-3xl font-black text-slate-900 md:text-4xl">Finish your order with clearer steps and one mobile money prompt.</h1>
               <p className="mt-3 max-w-2xl text-slate-600">Confirm delivery details, match the right network to your phone number, and review everything before we send the payment request.</p>
             </div>
@@ -157,7 +157,7 @@ const Checkout = () => {
                   key={item.key}
                   className={`rounded-2xl border px-3 py-3 text-left text-sm shadow-sm transition ${
                     step === index
-                      ? "border-rose-300 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] text-rose-700"
+                      ? "border-[#102A43]/15 bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] text-[#102A43]"
                       : "border-slate-200 bg-white text-slate-500"
                   }`}
                 >
@@ -223,12 +223,12 @@ const Checkout = () => {
                     onChange={(e) => setDelivery({ ...delivery, contactPhone: e.target.value })}
                   />
                   {payment.method === "mobile_money" && inferredNetworkLabel ? (
-                    <p className="mt-2 text-sm text-emerald-600">
+                    <p className="mt-2 text-sm text-[#102A43]">
                       This number appears to belong to {inferredNetworkLabel}.
                     </p>
                   ) : null}
                   {payment.method === "mobile_money" && phoneNetworkValidation && !phoneNetworkValidation.valid ? (
-                    <p className="mt-2 text-sm text-rose-600">{phoneNetworkValidation.message}</p>
+                    <p className="mt-2 text-sm text-red-600">{phoneNetworkValidation.message}</p>
                   ) : null}
                 </div>
 
@@ -263,7 +263,7 @@ const Checkout = () => {
                     We will send a payment prompt through Snippe after you place the order.
                   </p>
                   {payment.method === "mobile_money" && inferredNetworkLabel ? (
-                    <p className="mt-2 text-sm text-emerald-600">
+                    <p className="mt-2 text-sm text-[#102A43]">
                       Your network was selected automatically from your phone number: {inferredNetworkLabel}.
                     </p>
                   ) : null}
@@ -287,7 +287,7 @@ const Checkout = () => {
                             }
                             className={`rounded-[24px] border px-4 py-3 text-left shadow-sm transition ${
                               active
-                                ? "border-rose-300 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)]"
+                                ? "border-[#102A43]/15 bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)]"
                                 : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                             }`}
                           >
@@ -354,7 +354,7 @@ const Checkout = () => {
                       </p>
                     ) : null}
                     {payment.method === "mobile_money" && phoneNetworkValidation && !phoneNetworkValidation.valid ? (
-                      <p className="mt-2 text-sm text-rose-600">{phoneNetworkValidation.message}</p>
+                      <p className="mt-2 text-sm text-red-600">{phoneNetworkValidation.message}</p>
                     ) : null}
                   </div>
                 </div>
@@ -390,13 +390,13 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-black text-slate-900">
                 <span>Total</span>
-                <span className="text-rose-600">TZS {summary.total.toLocaleString()}</span>
+                <span className="text-[#102A43]">TZS {summary.total.toLocaleString()}</span>
               </div>
             </div>
 
             <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
               <div className="flex items-start gap-3">
-                <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+                <div className="rounded-2xl bg-slate-100 p-3 text-[#102A43]">
                   <FiShield />
                 </div>
                 <div>
@@ -405,7 +405,7 @@ const Checkout = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="rounded-2xl bg-sky-50 p-3 text-sky-700">
+                <div className="rounded-2xl bg-orange-50 p-3 text-orange-700">
                   <FiSmartphone />
                 </div>
                 <div>
@@ -433,7 +433,7 @@ const Checkout = () => {
 function TrustChip({ icon: Icon, title, text }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-      <div className="rounded-2xl bg-white p-3 text-rose-500 w-fit shadow-sm">
+      <div className="w-fit rounded-2xl bg-white p-3 text-[#102A43] shadow-sm">
         <Icon />
       </div>
       <p className="mt-3 font-semibold text-slate-900">{title}</p>

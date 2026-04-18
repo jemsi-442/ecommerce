@@ -140,6 +140,48 @@ const Order = sequelize.define(
       defaultValue: null,
       field: "delivered_at",
     },
+    deliveryProofRecipient: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_proof_recipient",
+    },
+    deliveryProofNote: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_proof_note",
+    },
+    deliveryIssueReportedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_issue_reported_at",
+    },
+    deliveryIssueReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_issue_reason",
+    },
+    deliveryIssueStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_issue_status",
+    },
+    deliveryIssueResolvedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_issue_resolved_at",
+    },
+    deliveryIssueResolutionNote: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_issue_resolution_note",
+    },
   },
   {
     tableName: "orders",

@@ -1,8 +1,9 @@
 import { AuditLog, Order, OrderItem, Product, Rider, User } from "../models/index.js";
-import { assignRider } from "../utils/assignRider.js";
+import { assignRider, getOrderVendorRiderScope } from "../utils/assignRider.js";
 import { canTransition } from "../utils/orderStatusFlow.js";
 import { serializeOrder } from "../utils/serializers.js";
 import { validatePhoneForSelectedNetwork } from "../utils/mobileMoneyNetworks.js";
+import { createNotificationRecord } from "../utils/createNotificationRecord.js";
 import {
   notifyOrderAwaitingPayment,
   notifyOrderPaymentCompleted,
@@ -25,6 +26,8 @@ const orderIncludes = [
     include: [{ model: Product, as: "product", attributes: ["id", "name"] }],
   },
 ];
+
+const DELIVERY_ISSUE_STATUSES = new Set(["open", "investigating", "resolved"]);
 
 const normalizeQuantity = (value) => {
   const quantity = Number(value);
@@ -192,7 +195,8 @@ const markOrderPaidInternally = async (order) => {
   order.paymentFailedAt = null;
 
   if (order.deliveryType === "home") {
-    const riderId = await assignRider();
+    const vendorId = await getOrderVendorRiderScope(order.id);
+    const riderId = await assignRider({ vendorId });
 
     if (riderId) {
       order.riderId = riderId;
@@ -609,6 +613,137 @@ export const getAllOrders = async (req, res) => {
     res.json(orders.map((order) => serializeOrder(order)));
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch orders" });
+  }
+};
+
+export const reportDeliveryIssue = async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id, { include: orderIncludes });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (String(order.userId) !== String(req.user._id)) {
+      return res.status(403).json({ message: "This order does not belong to you" });
+    }
+
+    if (String(order.status || "").toLowerCase() !== "delivered") {
+      return res.status(400).json({ message: "You can only report an issue after delivery" });
+    }
+
+    const issueReason = String(req.body?.reason || "").trim();
+    if (issueReason.length < 8) {
+      return res.status(400).json({ message: "Please share a short description of the delivery issue" });
+    }
+
+    order.deliveryIssueReason = issueReason;
+    order.deliveryIssueReportedAt = new Date();
+    order.deliveryIssueStatus = "open";
+    order.deliveryIssueResolvedAt = null;
+    order.deliveryIssueResolutionNote = null;
+    await order.save();
+
+    await AuditLog.create({
+      orderId: order.id,
+      userId: req.user._id,
+      riderId: order.riderId || null,
+      userName: req.user?.name || order.user?.name || null,
+      riderName: order.rider?.name || null,
+      type: "delivery",
+      action: "delivery_issue_reported",
+      message: `Customer reported a delivery issue for order ${order.id}`,
+      meta: {
+        reason: issueReason,
+        proofRecipient: order.deliveryProofRecipient || null,
+        proofNote: order.deliveryProofNote || null,
+      },
+    });
+
+    await createNotificationRecord({
+      orderId: order.id,
+      type: "admin_delivery_issue",
+      audience: "admin",
+      message: `Order #${order.id} has a reported delivery issue: ${issueReason}`,
+      phone: order.deliveryContactPhone || order.user?.phone || null,
+      customerName: order.user?.name || req.user?.name || null,
+      riderName: order.rider?.name || null,
+      status: "logged",
+    });
+
+    const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+    return res.json({
+      message: "Delivery issue reported successfully",
+      order: serializeOrder(fullOrder),
+    });
+  } catch (err) {
+    console.error("REPORT DELIVERY ISSUE ERROR:", err);
+    return res.status(500).json({ message: "Failed to report delivery issue" });
+  }
+};
+
+export const updateDeliveryIssueStatus = async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id, { include: orderIncludes });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (!order.deliveryIssueReason) {
+      return res.status(400).json({ message: "This order does not have a reported delivery issue" });
+    }
+
+    const nextStatus = String(req.body?.status || "").trim().toLowerCase();
+    const resolutionNote = String(req.body?.resolutionNote || "").trim();
+
+    if (!DELIVERY_ISSUE_STATUSES.has(nextStatus)) {
+      return res.status(400).json({ message: "Choose a valid issue status" });
+    }
+
+    order.deliveryIssueStatus = nextStatus;
+    order.deliveryIssueResolutionNote = resolutionNote || null;
+    order.deliveryIssueResolvedAt = nextStatus === "resolved" ? new Date() : null;
+    await order.save();
+
+    await AuditLog.create({
+      orderId: order.id,
+      userId: req.user._id,
+      riderId: order.riderId || null,
+      userName: req.user?.name || null,
+      riderName: order.rider?.name || null,
+      type: "delivery",
+      action: "delivery_issue_status_updated",
+      message: `Delivery issue for order ${order.id} marked as ${nextStatus}`,
+      meta: {
+        status: nextStatus,
+        resolutionNote: resolutionNote || null,
+      },
+    });
+
+    await createNotificationRecord({
+      orderId: order.id,
+      type: "customer_delivery_issue_update",
+      audience: "customer",
+      message:
+        nextStatus === "resolved"
+          ? `Your delivery issue for order #${order.id} has been resolved.`
+          : `Your delivery issue for order #${order.id} is now ${nextStatus}.`,
+      phone: order.deliveryContactPhone || order.user?.phone || null,
+      customerName: order.user?.name || null,
+      riderName: order.rider?.name || null,
+      status: "logged",
+      userId: order.userId,
+    });
+
+    const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+    return res.json({
+      message: "Delivery issue updated successfully",
+      order: serializeOrder(fullOrder),
+    });
+  } catch (err) {
+    console.error("UPDATE DELIVERY ISSUE STATUS ERROR:", err);
+    return res.status(500).json({ message: "Failed to update delivery issue status" });
   }
 };
 

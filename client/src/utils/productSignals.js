@@ -2,18 +2,16 @@ const makeLabel = (label, tone) => ({ label, tone });
 
 export const getSignalToneClasses = (tone) => {
   switch (tone) {
-    case "rose":
-      return "bg-rose-500/90 text-white shadow-sm";
-    case "amber":
-      return "bg-amber-500/90 text-white shadow-sm";
-    case "sky":
-      return "bg-sky-500/90 text-white shadow-sm";
-    case "emerald":
-      return "bg-emerald-500/90 text-white shadow-sm";
-    case "emerald-soft":
-      return "bg-emerald-50 text-emerald-700";
-    case "amber-soft":
-      return "bg-amber-50 text-amber-700";
+    case "alert":
+      return "bg-red-500/90 text-white shadow-sm";
+    case "orange":
+      return "bg-orange-500/90 text-white shadow-sm";
+    case "navy":
+      return "bg-[#102A43] text-white shadow-sm";
+    case "navy-soft":
+      return "bg-slate-100 text-[#102A43]";
+    case "orange-soft":
+      return "bg-orange-50 text-orange-700";
     case "slate":
     default:
       return "bg-white/90 text-slate-700 shadow-sm";
@@ -28,31 +26,31 @@ export const getProductBadges = (product, { index = 0 } = {}) => {
   const badges = [];
 
   if (index < 3) {
-    badges.push(makeLabel("Popular this week", "sky"));
+    badges.push(makeLabel("Popular this week", "navy"));
   }
 
   if (stock > 0 && stock <= 2) {
-    badges.push(makeLabel(`Only ${stock} left`, "rose"));
+    badges.push(makeLabel(`Only ${stock} left`, "alert"));
   } else if (stock > 0 && stock <= 5) {
-    badges.push(makeLabel("Low stock", "amber"));
+    badges.push(makeLabel("Low stock", "orange"));
   }
 
   if (stock >= 8) {
-    badges.push(makeLabel("Fast delivery eligible", "emerald"));
+    badges.push(makeLabel("Fast delivery eligible", "navy"));
   }
 
   if (product?.vendor?.storeSlug) {
-    badges.push(makeLabel("Seller highlight", "amber-soft"));
+    badges.push(makeLabel("Seller highlight", "orange-soft"));
   }
 
   if (price > 0 && price <= 50000) {
-    badges.push(makeLabel("Value pick", "emerald-soft"));
+    badges.push(makeLabel("Value pick", "navy-soft"));
   }
 
   if (reviewCount >= 5 && averageRating >= 4.5) {
-    badges.push(makeLabel("Top rated", "amber"));
+    badges.push(makeLabel("Top rated", "orange"));
   } else if (reviewCount >= 2 && averageRating >= 4) {
-    badges.push(makeLabel("Rated by shoppers", "sky"));
+    badges.push(makeLabel("Rated by shoppers", "navy"));
   }
 
   return badges;

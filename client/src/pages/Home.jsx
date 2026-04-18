@@ -38,21 +38,23 @@ const quickCollections = [
     title: "Fresh arrivals",
     subtitle: "Recently added pieces shoppers are starting to notice.",
     search: "new",
-    color: "from-emerald-500 via-emerald-400 to-teal-300",
+    color: "from-[#102A43] via-[#163A5F] to-[#28507A]",
   },
   {
     title: "Best value",
     subtitle: "Easy picks for customers who want strong value at a good price.",
     price: "0-50000",
-    color: "from-amber-400 via-orange-400 to-rose-300",
+    color: "from-[#F28C28] via-[#F59E0B] to-[#FDBA74]",
   },
   {
     title: "Statement picks",
     subtitle: "Premium products that deserve the front row of the marketplace.",
     price: "100000-10000000",
-    color: "from-sky-500 via-indigo-500 to-violet-400",
+    color: "from-[#102A43] via-[#1C4268] to-[#F28C28]",
   },
 ];
+
+const formatCurrency = (value) => `TZS ${Number(value || 0).toLocaleString()}`;
 
 export default function Home() {
   const { user } = useAuth();
@@ -348,21 +350,21 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f0fdf4_36%,#fff7ed_100%)] text-slate-900">
+    <div className="w-full overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eff6ff_36%,#fff7ed_100%)] text-slate-900">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_28%),linear-gradient(135deg,#052e2b_0%,#0f172a_48%,#111827_100%)]" />
-        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
-        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(242,140,40,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(148,163,184,0.12),transparent_28%),linear-gradient(135deg,#0f172a_0%,#172554_48%,#1e293b_100%)]" />
+        <div className="absolute -left-16 top-24 h-48 w-48 rounded-full bg-orange-300/20 blur-3xl" />
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-slate-300/15 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-[1.05fr_0.95fr] md:px-6 md:py-24">
           <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.28em] text-emerald-100">
+            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.28em] text-orange-100">
               Discover trusted sellers in one place
             </span>
 
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.02] tracking-tight text-white sm:text-5xl md:text-6xl">
               The marketplace built to help shoppers buy faster
-              <span className="block bg-[linear-gradient(90deg,#a7f3d0_0%,#fde68a_55%,#fdba74_100%)] bg-clip-text text-transparent">
+              <span className="block bg-[linear-gradient(90deg,#bfdbfe_0%,#fdba74_58%,#fed7aa_100%)] bg-clip-text text-transparent">
                 and sellers grow with confidence.
               </span>
             </h1>
@@ -372,7 +374,7 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/shop" className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_32px_rgba(16,185,129,0.28)] transition hover:-translate-y-0.5">
+              <Link to="/shop" className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_32px_rgba(16,42,67,0.32)] transition hover:-translate-y-0.5">
                 Explore Marketplace <FiArrowRight />
               </Link>
               {!user ? (
@@ -396,14 +398,14 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, delay: 0.1 }} className="relative">
             <div className="grid gap-4 md:grid-cols-[0.95fr_1.05fr]">
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 backdrop-blur-xl shadow-2xl shadow-slate-950/35">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-100">Marketplace promise</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-100">Marketplace promise</p>
                 <div className="mt-5 space-y-4">
                   {trustPoints.map((item) => {
                     const Icon = item.icon;
                     return (
                       <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-2xl bg-white/10 p-3 text-emerald-100">
+                          <div className="rounded-2xl bg-white/10 p-3 text-orange-100">
                             <Icon size={20} />
                           </div>
                           <div>
@@ -418,7 +420,7 @@ export default function Home() {
               </div>
 
               <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.07)_100%)] p-5 backdrop-blur-xl shadow-2xl shadow-black/35">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-100">Now trending</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-100">Now trending</p>
                 <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
                   <div className="aspect-[4/4.4] overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]">
                     <img
@@ -444,7 +446,7 @@ export default function Home() {
                         </div>
                       ) : null}
                     </div>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-amber-100">
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-orange-100">
                       {featuredProducts[0]?.price ? `TZS ${Number(featuredProducts[0].price).toLocaleString()}` : 'Top pick'}
                     </span>
                   </div>
@@ -476,11 +478,11 @@ export default function Home() {
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-500">Favorite stores</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#102A43]">Favorite stores</p>
                   <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Your seller shortcuts are ready</h2>
                   <p className="mt-2 max-w-2xl text-slate-600">Jump back into the storefronts you trust most, then keep building your basket from sellers already matching your style.</p>
                 </div>
-                <div className="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+                <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
                   {favoriteStoreCount} saved store{favoriteStoreCount === 1 ? "" : "s"}
                 </div>
               </div>
@@ -511,17 +513,17 @@ export default function Home() {
                           <p className="mt-2 text-sm text-slate-600">{store.inStockCount || 0} ready now across {store.itemCount || 0} live product{Number(store.itemCount || 0) === 1 ? "" : "s"}.</p>
                           <p className="mt-2 text-sm font-medium text-slate-500">{getStoreNudge(store)}</p>
                           {Number(store.startingPrice || 0) > 0 ? (
-                            <p className="mt-2 text-sm font-semibold text-emerald-700">Starts from {formatCurrency(store.startingPrice)}</p>
+                            <p className="mt-2 text-sm font-semibold text-[#102A43]">Starts from {formatCurrency(store.startingPrice)}</p>
                           ) : null}
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <Link to={`/stores/${store.slug}`} className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5">
+                          <Link to={`/stores/${store.slug}`} className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5">
                             Visit store <FiArrowRight />
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleToggleFavoriteStore(store)}
-                            className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                            className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                           >
                             <FiHeart /> Saved
                           </button>
@@ -585,11 +587,11 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6 md:py-20">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-700">Featured shelves</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Featured shelves</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Products shoppers can move on quickly</h2>
             <p className="mt-2 max-w-2xl text-slate-600">A stronger front page helps buyers decide faster. These are the products already carrying the right marketplace energy.</p>
           </div>
-          <Link to="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800">
+          <Link to="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-[#102A43] hover:text-[#081B2E]">
             View full catalog <FiArrowRight />
           </Link>
         </div>
@@ -617,16 +619,16 @@ export default function Home() {
                         }}
                       />
                       <div className="pointer-events-none absolute inset-x-4 top-4 flex flex-wrap gap-2 text-xs">
-                        <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-white/90 text-emerald-700" : "bg-slate-900/75 text-white"}`}>
+                        <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-white/90 text-[#102A43]" : "bg-slate-900/75 text-white"}`}>
                           {Number(product.countInStock || 0) > 0 ? `${Number(product.countInStock || 0)} ready now` : "Currently unavailable"}
                         </span>
                         {cartQty > 0 ? (
-                          <span className="rounded-full bg-sky-50/95 px-3 py-1 font-semibold text-sky-700">
+                          <span className="rounded-full bg-orange-50/95 px-3 py-1 font-semibold text-orange-700">
                             In cart x{cartQty}
                           </span>
                         ) : null}
                         {saved ? (
-                          <span className="rounded-full bg-rose-50/95 px-3 py-1 font-semibold text-rose-700">
+                          <span className="rounded-full bg-orange-50/95 px-3 py-1 font-semibold text-orange-700">
                             Saved by you
                           </span>
                         ) : null}
@@ -661,7 +663,7 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-slate-500">Price</p>
-                      <p className="text-xl font-black text-emerald-700">{loading ? '...' : `TZS ${Number(product.price || 0).toLocaleString()}`}</p>
+                      <p className="text-xl font-black text-[#102A43]">{loading ? '...' : `TZS ${Number(product.price || 0).toLocaleString()}`}</p>
                     </div>
                   </div>
 
@@ -692,7 +694,7 @@ export default function Home() {
                         onClick={() => handleRecommendationToggleSaved(product)}
                         className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                           saved
-                            ? 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                            ? 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'
                             : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                         }`}
                       >
@@ -702,7 +704,7 @@ export default function Home() {
                         type="button"
                         onClick={() => handleRecommendationAddToCart(product)}
                         disabled={Number(product.countInStock || 0) <= 0}
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <FiShoppingBag /> {cartQty > 0 ? 'Add another' : 'Add to cart'}
                       </button>
@@ -719,7 +721,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-14 md:px-6 md:py-18">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-600">Storefronts to watch</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Storefronts to watch</p>
               <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Let strong sellers become part of the shopping story</h2>
               <p className="mt-2 max-w-2xl text-slate-600">Marketplace growth looks better when shoppers can discover trusted stores, not just individual items.</p>
             </div>
@@ -729,7 +731,7 @@ export default function Home() {
             {(featuredStores.length ? featuredStores : Array.from({ length: 3 })).map((store, index) => (
               <article key={store?.slug || index} className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-                    <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+                    <div className="rounded-2xl bg-slate-100 p-3 text-[#102A43]">
                       <FiPackage size={20} />
                     </div>
                     <div>
@@ -772,7 +774,7 @@ export default function Home() {
                     </div>
                     {store?.slug ? (
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <Link to={`/stores/${store.slug}`} className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800">
+                        <Link to={`/stores/${store.slug}`} className="inline-flex items-center gap-2 text-sm font-semibold text-[#102A43] hover:text-[#081B2E]">
                           Visit store <FiArrowRight />
                         </Link>
                         <button
@@ -780,7 +782,7 @@ export default function Home() {
                           onClick={() => handleToggleFavoriteStore(store)}
                           className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
                             isFavoriteStore(store.slug)
-                              ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                              ? "border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
                               : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >

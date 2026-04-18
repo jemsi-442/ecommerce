@@ -117,6 +117,14 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: true,
     },
+    phone: {
+      type: DataTypes.STRING(40),
+      allowNull: true,
+      defaultValue: null,
+      set(value) {
+        this.setDataValue("phone", normalizeNullableText(value));
+      },
+    },
     storeName: {
       type: DataTypes.STRING(120),
       allowNull: true,

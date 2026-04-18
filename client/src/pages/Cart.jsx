@@ -144,7 +144,7 @@ export default function Cart() {
         <section className="rounded-[32px] border border-white/80 bg-white/92 p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)] md:p-7">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-400">Checkout ready</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Checkout ready</p>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Your cart is lined up for a smooth checkout.</h1>
               <p className="mt-3 max-w-2xl text-slate-600">Review quantities, keep stronger picks, and move to mobile money checkout with a clearer summary of what happens next.</p>
             </div>
@@ -165,8 +165,8 @@ export default function Cart() {
                   <p className="mt-1 text-slate-500">Everything here is ready for one cleaner move into checkout.</p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">Mobile money checkout</span>
-                  <span className="rounded-full bg-sky-50 px-3 py-1 font-semibold text-sky-700">Trackable order updates</span>
+                  <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">Mobile money checkout</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#102A43]">Trackable order updates</span>
                 </div>
               </div>
 
@@ -196,11 +196,11 @@ export default function Cart() {
                             <h3 className="text-lg font-bold text-slate-900">{item.name}</h3>
                             {item.variant ? <p className="text-sm text-slate-500">{item.variant.name}</p> : null}
                             <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                              <span className={`rounded-full px-3 py-1 font-semibold ${ready ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                              <span className={`rounded-full px-3 py-1 font-semibold ${ready ? 'bg-slate-100 text-[#102A43]' : 'bg-slate-100 text-slate-500'}`}>
                                 {ready ? 'Ready for checkout' : 'Currently unavailable'}
                               </span>
                               {saved ? (
-                                <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">Saved by you</span>
+                                <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">Saved by you</span>
                               ) : null}
                             </div>
                           </div>
@@ -213,7 +213,7 @@ export default function Cart() {
                           </button>
                         </div>
 
-                        <p className="mt-3 font-extrabold text-rose-600">TZS {Number(item.price).toLocaleString()}</p>
+                        <p className="mt-3 font-extrabold text-[#102A43]">TZS {Number(item.price).toLocaleString()}</p>
 
                         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <div className="inline-flex items-center overflow-hidden rounded-xl border border-slate-300">
@@ -238,7 +238,7 @@ export default function Cart() {
                             onClick={() => handleToggleSaved(item)}
                             className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                               saved
-                                ? 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                ? 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'
                                 : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                             }`}
                           >
@@ -278,7 +278,7 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-black text-slate-900">
                     <span>Total</span>
-                    <span className="text-rose-600">TZS {totals.total.toLocaleString()}</span>
+                    <span className="text-[#102A43]">TZS {totals.total.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -293,7 +293,7 @@ export default function Cart() {
 
               <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+                  <div className="rounded-2xl bg-slate-100 p-3 text-[#102A43]">
                     <FiShield />
                   </div>
                   <div>
@@ -302,7 +302,7 @@ export default function Cart() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="rounded-2xl bg-sky-50 p-3 text-sky-700">
+                  <div className="rounded-2xl bg-orange-50 p-3 text-orange-700">
                     <FiTruck />
                   </div>
                   <div>

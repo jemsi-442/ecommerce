@@ -3,12 +3,12 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
   const location = useLocation();
   const normalizedRole = user?.role === "user" ? "customer" : user?.role;
   const normalizedAllowedRoles = allowedRoles.map((role) => (role === "user" ? "customer" : role));
 
-  if (user === undefined) {
+  if (!authReady) {
     return (
       <div className="h-screen flex items-center justify-center">
         <span className="text-slate-500">Loading...</span>

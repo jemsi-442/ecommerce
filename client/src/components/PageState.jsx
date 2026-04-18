@@ -6,10 +6,12 @@ export default function PageState({
   const toneStyles = {
     neutral:
       "border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_100%)] text-slate-700 shadow-[0_16px_36px_rgba(15,23,42,0.05)]",
+    info:
+      "border-[#102A43]/15 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_100%)] text-[#102A43] shadow-[0_16px_36px_rgba(16,42,67,0.08)]",
     error:
-      "border-rose-200 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] text-rose-700 shadow-[0_16px_36px_rgba(244,63,94,0.08)]",
+      "border-red-200 bg-[linear-gradient(135deg,#fef2f2_0%,#fff7ed_100%)] text-red-700 shadow-[0_16px_36px_rgba(220,38,38,0.08)]",
     warning:
-      "border-amber-200 bg-[linear-gradient(135deg,#fffbeb_0%,#fff7ed_100%)] text-amber-700 shadow-[0_16px_36px_rgba(245,158,11,0.08)]",
+      "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_100%)] text-orange-700 shadow-[0_16px_36px_rgba(242,140,40,0.08)]",
   };
 
   return (

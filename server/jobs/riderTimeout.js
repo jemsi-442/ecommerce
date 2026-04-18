@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
 import Order from "../models/Order.js";
 import Rider from "../models/Rider.js";
-import { assignRider } from "../utils/assignRider.js";
+import { assignRider, getOrderVendorRiderScope } from "../utils/assignRider.js";
 
 const SLA_MINUTES = 2;
 
@@ -30,7 +30,8 @@ export const riderAutoTimeout = async () => {
         await Rider.update({ available: true }, { where: { id: oldRiderId } });
       }
 
-      const newRiderId = await assignRider();
+      const vendorId = await getOrderVendorRiderScope(order.id);
+      const newRiderId = await assignRider({ vendorId });
 
       if (!newRiderId) {
         console.warn(`No rider available for order ${order.id}`);

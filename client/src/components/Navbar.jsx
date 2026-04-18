@@ -35,7 +35,7 @@ function MarketplaceSearch({
           onFocus={() => setSearchOpen(true)}
           onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
           placeholder="Search products or stores"
-          className="w-full rounded-full border border-slate-300 bg-white/95 py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+          className="w-full rounded-full border border-slate-300 bg-white/95 py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-[#102A43]/45 focus:ring-2 focus:ring-[#F28C28]/15"
         />
       </form>
 
@@ -50,13 +50,13 @@ function MarketplaceSearch({
                     key={store.slug}
                     type="button"
                     onClick={() => onSelectStore(store)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-transparent bg-slate-50 px-4 py-3 text-left transition hover:border-amber-200 hover:bg-amber-50"
+                    className="flex w-full items-center justify-between rounded-2xl border border-transparent bg-slate-50 px-4 py-3 text-left transition hover:border-[#F28C28]/25 hover:bg-orange-50"
                   >
                     <div>
                       <p className="font-semibold text-slate-900">{store.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{store.itemCount} live product{store.itemCount === 1 ? "" : "s"}</p>
                     </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700">Store</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#D97706]">Store</span>
                   </button>
                 ))}
               </div>
@@ -72,7 +72,7 @@ function MarketplaceSearch({
                     key={product._id}
                     type="button"
                     onClick={() => onSelectProduct(product)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-transparent bg-slate-50 px-4 py-3 text-left transition hover:border-emerald-200 hover:bg-emerald-50"
+                    className="flex w-full items-center justify-between rounded-2xl border border-transparent bg-slate-50 px-4 py-3 text-left transition hover:border-[#102A43]/18 hover:bg-slate-100"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-slate-900">{product.name}</p>
@@ -80,7 +80,7 @@ function MarketplaceSearch({
                         {product.vendor?.storeName || product.vendor?.name || "Marketplace seller"}
                       </p>
                     </div>
-                    <span className="ml-3 whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span className="ml-3 whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#102A43]">
                       TZS {Number(product.price || 0).toLocaleString()}
                     </span>
                   </button>
@@ -248,7 +248,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 md:px-6">
         <Link to="/" className="text-xl font-black tracking-tight text-slate-900 md:text-2xl">
-          Ecom<span className="text-rose-500">merce</span>
+          Ecom<span className="text-[#F28C28]">merce</span>
         </Link>
 
         <div className="hidden md:block">
@@ -275,13 +275,13 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center gap-6 md:flex">
-          <Link to="/" className="text-slate-700 transition hover:text-rose-600">
+          <Link to="/" className="text-slate-700 transition hover:text-[#102A43]">
             Home
           </Link>
 
           {user && (
             <>
-              <Link to="/shop" className="text-slate-700 transition hover:text-rose-600">
+              <Link to="/shop" className="text-slate-700 transition hover:text-[#102A43]">
                 Shop
               </Link>
 
@@ -289,22 +289,22 @@ export default function Navbar() {
                 <>
                   <Link
                     to="/account"
-                    className="flex items-center gap-1 text-slate-700 transition hover:text-rose-600"
+                    className="flex items-center gap-1 text-slate-700 transition hover:text-[#102A43]"
                   >
                     <FiBell /> Account
                     {unreadCount > 0 && (
-                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-xs text-white">
+                      <span className="rounded-full bg-[#102A43] px-2 py-0.5 text-xs text-white">
                         {unreadCount}
                       </span>
                     )}
                   </Link>
                   <Link
                     to="/account#wishlist"
-                    className="flex items-center gap-1 text-slate-700 transition hover:text-rose-600"
+                    className="flex items-center gap-1 text-slate-700 transition hover:text-[#102A43]"
                   >
                     <FiHeart /> Saved
                     {savedCount > 0 && (
-                      <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs text-white">
+                      <span className="rounded-full bg-[#F28C28] px-2 py-0.5 text-xs text-white">
                         {savedCount}
                       </span>
                     )}
@@ -314,11 +314,11 @@ export default function Navbar() {
 
               <Link
                 to="/cart"
-                className="flex items-center gap-1 text-slate-700 transition hover:text-rose-600"
+                className="flex items-center gap-1 text-slate-700 transition hover:text-[#102A43]"
               >
                 <FiShoppingBag /> Cart
                 {cartCount > 0 && (
-                  <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs text-white">
+                  <span className="rounded-full bg-[#F28C28] px-2 py-0.5 text-xs text-white">
                     {cartCount}
                   </span>
                 )}
@@ -327,7 +327,7 @@ export default function Navbar() {
           )}
 
           {user?.role === "admin" && (
-            <Link to="/admin" className="font-semibold text-rose-600">
+            <Link to="/admin" className="font-semibold text-[#102A43]">
               Admin
             </Link>
           )}
@@ -339,7 +339,7 @@ export default function Navbar() {
           )}
 
           {user?.role === "rider" && (
-            <Link to="/rider" className="font-semibold text-rose-600">
+            <Link to="/rider" className="font-semibold text-[#102A43]">
               Rider
             </Link>
           )}
@@ -394,7 +394,7 @@ export default function Navbar() {
                     <FiBell />
                     Account
                     {unreadCount > 0 && (
-                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-xs text-white">
+                      <span className="rounded-full bg-[#102A43] px-2 py-0.5 text-xs text-white">
                         {unreadCount}
                       </span>
                     )}
@@ -407,7 +407,7 @@ export default function Navbar() {
                     <FiHeart />
                     Saved
                     {savedCount > 0 && (
-                      <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs text-white">
+                      <span className="rounded-full bg-[#F28C28] px-2 py-0.5 text-xs text-white">
                         {savedCount}
                       </span>
                     )}
@@ -418,7 +418,7 @@ export default function Navbar() {
                 <FiShoppingBag />
                 Cart
                 {cartCount > 0 && (
-                  <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs text-white">
+                  <span className="rounded-full bg-[#F28C28] px-2 py-0.5 text-xs text-white">
                     {cartCount}
                   </span>
                 )}
@@ -427,7 +427,7 @@ export default function Navbar() {
           )}
 
           {user?.role === "admin" && (
-            <Link onClick={closeMenu} to="/admin" className="block font-medium text-rose-600">
+            <Link onClick={closeMenu} to="/admin" className="block font-medium text-[#102A43]">
               Admin
             </Link>
           )}
@@ -439,7 +439,7 @@ export default function Navbar() {
           )}
 
           {user?.role === "rider" && (
-            <Link onClick={closeMenu} to="/rider" className="block font-medium text-rose-600">
+            <Link onClick={closeMenu} to="/rider" className="block font-medium text-[#102A43]">
               Rider
             </Link>
           )}

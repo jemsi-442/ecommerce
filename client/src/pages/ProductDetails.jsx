@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FiCheckCircle, FiHeart, FiMinus, FiPlus, FiShoppingBag, FiStar, FiXCircle } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
@@ -42,6 +42,7 @@ export default function ProductDetails() {
   const { id } = useParams();
   const { isSavedProduct, recordRecentlyViewed, toggleSavedProduct } = useSavedProducts();
   const toast = useToast();
+  const recordRecentlyViewedRef = useRef(recordRecentlyViewed);
 
   const [product, setProduct] = useState(null);
   const [catalog, setCatalog] = useState([]);
@@ -58,6 +59,10 @@ export default function ProductDetails() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const isSignedInCustomer = Boolean(user?.token) && ["customer", "user"].includes(user?.role);
+
+  useEffect(() => {
+    recordRecentlyViewedRef.current = recordRecentlyViewed;
+  }, [recordRecentlyViewed]);
 
   useEffect(() => {
     let mounted = true;
@@ -100,7 +105,6 @@ export default function ProductDetails() {
           title: productData.userReview?.title || "",
           comment: productData.userReview?.comment || "",
         });
-        recordRecentlyViewed(normalizedProduct);
       } catch (err) {
         if (mounted) {
           setError('Failed to load product.');
@@ -123,7 +127,15 @@ export default function ProductDetails() {
     return () => {
       mounted = false;
     };
-  }, [id, recordRecentlyViewed]);
+  }, [id]);
+
+  useEffect(() => {
+    if (!product?._id) {
+      return;
+    }
+
+    recordRecentlyViewedRef.current?.(product);
+  }, [product]);
 
   const isSaved = useMemo(() => isSavedProduct(product?._id), [isSavedProduct, product?._id]);
 
@@ -317,7 +329,7 @@ export default function ProductDetails() {
                     aria-label="View image thumbnail"
                     key={index}
                     onClick={() => setActiveImage(index)}
-                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 ${activeImage === index ? 'border-rose-500' : 'border-slate-200'}`}
+                    className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 ${activeImage === index ? 'border-orange-500' : 'border-slate-200'}`}
                   >
                     <img
                       src={img}
@@ -335,9 +347,9 @@ export default function ProductDetails() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
             <h1 className="text-3xl font-black text-slate-900">{product.name}</h1>
-            <p className="mt-2 text-2xl font-black text-rose-600">TZS {Number(selectedVariant?.price || product.price).toLocaleString()}</p>
+            <p className="mt-2 text-2xl font-black text-[#102A43]">TZS {Number(selectedVariant?.price || product.price).toLocaleString()}</p>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-amber-700">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-orange-700">
                 <RatingStars value={Number(ratingSummary.averageRating || 0)} />
                 <span className="font-semibold">
                   {ratingSummary.reviewCount
@@ -350,11 +362,11 @@ export default function ProductDetails() {
             <p className="mt-4 leading-relaxed text-slate-600">{product.description}</p>
 
             {product.vendor?.storeSlug ? (
-              <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-500">Sold By</p>
+              <div className="mt-5 rounded-2xl border border-orange-100 bg-orange-50/70 p-4 text-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-500">Sold By</p>
                 <Link
                   to={`/stores/${product.vendor.storeSlug}`}
-                  className="mt-2 inline-flex items-center gap-2 text-base font-bold text-slate-900 hover:text-amber-700"
+                  className="mt-2 inline-flex items-center gap-2 text-base font-bold text-slate-900 hover:text-orange-700"
                 >
                   {product.vendor.storeName || product.vendor.name}
                 </Link>
@@ -369,7 +381,7 @@ export default function ProductDetails() {
                     <button
                       key={variant._id}
                       onClick={() => setSelectedVariant(variant)}
-                      className={`rounded-xl border px-4 py-2 text-sm font-medium ${selectedVariant?._id === variant._id ? 'border-rose-500 bg-rose-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-rose-300'}`}
+                      className={`rounded-xl border px-4 py-2 text-sm font-medium ${selectedVariant?._id === variant._id ? 'border-[#102A43] bg-[#102A43] text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-[#102A43]/35'}`}
                     >
                       {variant.name}
                     </button>
@@ -381,8 +393,8 @@ export default function ProductDetails() {
             <div className="mt-6 inline-flex items-center gap-2 text-sm">
               {availableStock > 0 ? (
                 <>
-                  <FiCheckCircle className="text-emerald-500" />
-                  <span className="text-emerald-700">{availableStock} in stock</span>
+                  <FiCheckCircle className="text-[#102A43]" />
+                  <span className="text-[#102A43]">{availableStock} in stock</span>
                 </>
               ) : (
                 <>
@@ -394,12 +406,12 @@ export default function ProductDetails() {
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {currentCartQty > 0 ? (
-                <span className="rounded-full bg-sky-50 px-3 py-1 font-semibold text-sky-700">
+                <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">
                   In cart x{currentCartQty}
                 </span>
               ) : null}
               {isSaved ? (
-                <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">
+                <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">
                   Saved by you
                 </span>
               ) : null}
@@ -430,8 +442,8 @@ export default function ProductDetails() {
                 onClick={() => handleToggleSaved(product)}
                 className={`inline-flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition sm:w-auto ${
                   isSaved
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                    : 'border-slate-300 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-600'
+                    ? 'border-orange-200 bg-orange-50 text-orange-700'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:text-orange-700'
                 }`}
               >
                 <FiHeart /> {isSaved ? 'Saved' : 'Save for later'}
@@ -440,7 +452,7 @@ export default function ProductDetails() {
               <button
                 onClick={handleAddToCart}
                 disabled={availableStock === 0}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 <FiShoppingBag /> {currentCartQty > 0 ? "Add another" : "Add to Cart"}
               </button>
@@ -450,7 +462,7 @@ export default function ProductDetails() {
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-500">Shopper trust</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500">Shopper trust</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900">What buyers are saying</h2>
             <div className="mt-5 flex items-end gap-4">
               <div>
@@ -479,7 +491,7 @@ export default function ProductDetails() {
                     <span className="font-semibold text-slate-700">{row.rating} star</span>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-[linear-gradient(90deg,#f59e0b_0%,#f97316_100%)]"
+                        className="h-full rounded-full bg-[linear-gradient(90deg,#f28c28_0%,#ea580c_100%)]"
                         style={{ width: `${share}%` }}
                       />
                     </div>
@@ -521,8 +533,8 @@ export default function ProductDetails() {
                           onClick={() => setReviewForm((current) => ({ ...current, rating }))}
                           className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                             Number(reviewForm.rating) === rating
-                              ? "border-amber-300 bg-amber-50 text-amber-700"
-                              : "border-slate-300 bg-white text-slate-700 hover:border-amber-200"
+                              ? "border-orange-300 bg-orange-50 text-orange-700"
+                              : "border-slate-300 bg-white text-slate-700 hover:border-orange-200"
                           }`}
                         >
                           <FiStar className={`${Number(reviewForm.rating) === rating ? "fill-current" : ""}`} />
@@ -542,7 +554,7 @@ export default function ProductDetails() {
                       value={reviewForm.title}
                       onChange={(event) => setReviewForm((current) => ({ ...current, title: event.target.value }))}
                       placeholder="What stood out most?"
-                      className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                      className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#102A43]/35"
                     />
                   </div>
 
@@ -556,14 +568,14 @@ export default function ProductDetails() {
                       onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
                       placeholder="Tell other shoppers how delivery, quality, and value felt."
                       rows={4}
-                      className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-300"
+                      className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#102A43]/35"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={reviewSubmitting}
-                    className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#f59e0b_0%,#ea580c_100%)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {reviewSubmitting ? "Saving review..." : userReview ? "Update your review" : "Share your review"}
                   </button>
@@ -573,7 +585,7 @@ export default function ProductDetails() {
               {!isSignedInCustomer ? (
                 <Link
                   to="/login"
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-800"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-orange-700 hover:text-orange-800"
                 >
                   Sign in to review after delivery
                 </Link>
@@ -582,7 +594,7 @@ export default function ProductDetails() {
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-500">Recent reviews</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500">Recent reviews</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900">Verified shopper feedback</h2>
             <div className="mt-6 space-y-4">
               {reviews.length ? (

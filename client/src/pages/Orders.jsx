@@ -34,7 +34,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [catalog, setCatalog] = useState([]);
-  const [profile, setProfile] = useState({ name: "", email: "", businessPhone: "" });
+  const [profile, setProfile] = useState({ name: "", email: "", phone: "", createdAt: "" });
   const [profileBusy, setProfileBusy] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [recentReorder, setRecentReorder] = useState(null);
@@ -102,7 +102,8 @@ export default function Orders() {
         setProfile({
           name: nextProfile.name || "",
           email: nextProfile.email || "",
-          businessPhone: nextProfile.businessPhone || "",
+          phone: nextProfile.phone || "",
+          createdAt: nextProfile.createdAt || "",
         });
         updateUser?.(nextProfile);
       })
@@ -110,7 +111,8 @@ export default function Orders() {
         setProfile({
           name: user?.name || "",
           email: user?.email || "",
-          businessPhone: user?.businessPhone || "",
+          phone: user?.phone || "",
+          createdAt: user?.createdAt || "",
         });
       });
   };
@@ -251,7 +253,8 @@ export default function Orders() {
       setProfile({
         name: nextUser.name || "",
         email: nextUser.email || "",
-        businessPhone: nextUser.businessPhone || "",
+        phone: nextUser.phone || "",
+        createdAt: nextUser.createdAt || profile.createdAt || "",
       });
       toast.success(data?.message || "Profile updated successfully");
     } catch (error) {
@@ -300,8 +303,21 @@ export default function Orders() {
   }, [orders]);
 
   const latestContactPhone = useMemo(() => {
-    return profile.businessPhone || orders.find((order) => order.delivery?.contactPhone)?.delivery?.contactPhone || "No phone added yet";
-  }, [orders, profile.businessPhone]);
+    return profile.phone || orders.find((order) => order.delivery?.contactPhone)?.delivery?.contactPhone || "No phone added yet";
+  }, [orders, profile.phone]);
+
+  const joinedAtLabel = useMemo(() => {
+    if (!profile.createdAt) {
+      return "Recently";
+    }
+
+    const date = new Date(profile.createdAt);
+    if (Number.isNaN(date.getTime())) {
+      return "Recently";
+    }
+
+    return date.toLocaleString();
+  }, [profile.createdAt]);
 
 
   const favoriteStoreCards = useMemo(() => {
@@ -543,6 +559,25 @@ export default function Orders() {
     }
 
     toast.success(`Added ${addedLines} item ${addedLines === 1 ? "line" : "lines"} from this order to your cart`);
+  };
+
+  const reportDeliveryIssue = async (order) => {
+    const reason = window.prompt("What went wrong with this delivery?");
+    if (!reason || !reason.trim()) return;
+
+    try {
+      setBusyId(order._id);
+      const { data } = await api.post(`/orders/${order._id}/report-delivery-issue`, {
+        reason: reason.trim(),
+      });
+      toast.success(data?.message || "Delivery issue reported");
+      fetchOrders();
+      fetchNotifications();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to report delivery issue");
+    } finally {
+      setBusyId(null);
+    }
   };
 
 
@@ -927,40 +962,6 @@ export default function Orders() {
     return moves.slice(0, 3);
   }, [nextReviewTarget, reviewReadyToBuyAgain, trustedCategories, reviewLedStores]);
 
-  const reviewHomecoming = useMemo(() => {
-    if (reviewReminderItems.length > 0 && nextReviewTarget) {
-      return {
-        eyebrow: 'Welcome back',
-        title: 'A few trusted shopping actions are still waiting for you',
-        description: `You still have ${reviewReminderItems.length} delivered item${reviewReminderItems.length === 1 ? '' : 's'} ready for feedback, starting with ${nextReviewTarget.item?.name || 'your next item'}.`,
-        primaryLabel: 'Review next item',
-        primaryAction: 'review',
-      };
-    }
-
-    if (reviewReadyToBuyAgain.length > 0) {
-      return {
-        eyebrow: 'Welcome back',
-        title: 'You already have proven favorites ready to shop again',
-        description: `${reviewReadyToBuyAgain[0].name} is still in stock, already reviewed by you, and ready for another easy order.`,
-        primaryLabel: 'View reorder pick',
-        primaryAction: 'rebuy',
-      };
-    }
-
-    if (reviewerSnapshot.totalReviews > 0) {
-      return {
-        eyebrow: 'Trusted shopper',
-        title: 'Your feedback is now part of the marketplace buying signal',
-        description: `You have shared ${reviewerSnapshot.totalReviews} review${reviewerSnapshot.totalReviews === 1 ? '' : 's'} and helped shoppers discover stronger stores and products.`,
-        primaryLabel: 'Browse trusted categories',
-        primaryAction: 'category',
-      };
-    }
-
-    return null;
-  }, [reviewReminderItems, nextReviewTarget, reviewReadyToBuyAgain, reviewerSnapshot, trustedCategories]);
-
   const accountJumpLinks = useMemo(() => {
     const links = [];
 
@@ -1020,7 +1021,7 @@ export default function Orders() {
 
     if (reviewReadyToBuyAgain.length) {
       return {
-        tone: 'emerald',
+        tone: 'navy',
         title: 'A proven reorder is still in stock',
         description: `${reviewReadyToBuyAgain[0].name} is ready for another easy order.`,
         cta: 'rebuy',
@@ -1030,7 +1031,7 @@ export default function Orders() {
 
     if (trustedCategories.length) {
       return {
-        tone: 'sky',
+        tone: 'navy',
         title: 'You already know where to shop with confidence',
         description: `${trustedCategories[0].name} is one of your strongest trusted categories right now.`,
         cta: 'category',
@@ -1087,6 +1088,40 @@ export default function Orders() {
       mostRecentReviewAt,
     };
   }, [orders, catalog, reviewInsights]);
+
+  const reviewHomecoming = useMemo(() => {
+    if (reviewReminderItems.length > 0 && nextReviewTarget) {
+      return {
+        eyebrow: 'Welcome back',
+        title: 'A few trusted shopping actions are still waiting for you',
+        description: `You still have ${reviewReminderItems.length} delivered item${reviewReminderItems.length === 1 ? '' : 's'} ready for feedback, starting with ${nextReviewTarget.item?.name || 'your next item'}.`,
+        primaryLabel: 'Review next item',
+        primaryAction: 'review',
+      };
+    }
+
+    if (reviewReadyToBuyAgain.length > 0) {
+      return {
+        eyebrow: 'Welcome back',
+        title: 'You already have proven favorites ready to shop again',
+        description: `${reviewReadyToBuyAgain[0].name} is still in stock, already reviewed by you, and ready for another easy order.`,
+        primaryLabel: 'View reorder pick',
+        primaryAction: 'rebuy',
+      };
+    }
+
+    if (reviewerSnapshot.totalReviews > 0) {
+      return {
+        eyebrow: 'Trusted shopper',
+        title: 'Your feedback is now part of the marketplace buying signal',
+        description: `You have shared ${reviewerSnapshot.totalReviews} review${reviewerSnapshot.totalReviews === 1 ? '' : 's'} and helped shoppers discover stronger stores and products.`,
+        primaryLabel: 'Browse trusted categories',
+        primaryAction: 'category',
+      };
+    }
+
+    return null;
+  }, [reviewReminderItems, nextReviewTarget, reviewReadyToBuyAgain, reviewerSnapshot, trustedCategories]);
 
   const reviewerSignals = useMemo(() => {
     const entries = orders
@@ -1297,7 +1332,7 @@ export default function Orders() {
     if (reviewReadyToBuyAgain.length >= 2) {
       lanes.push({
         key: 'rebuy',
-        tone: 'emerald',
+        tone: 'navy',
         title: 'Best shopping lane for you: reorder with confidence',
         description: 'Your account shows strong repeat-buying confidence, so the fastest path is to revisit proven products that are still in stock.',
         cta: 'rebuy',
@@ -1309,7 +1344,7 @@ export default function Orders() {
     if (reviewLedStores.length >= 2) {
       lanes.push({
         key: 'store',
-        tone: 'sky',
+        tone: 'navy',
         title: 'Best shopping lane for you: trusted stores first',
         description: 'You tend to build confidence through storefronts, so browsing stores you already trust is likely to feel easiest and strongest.',
         cta: 'store',
@@ -1321,7 +1356,7 @@ export default function Orders() {
     if (trustedCategories.length >= 2) {
       lanes.push({
         key: 'category',
-        tone: 'cyan',
+        tone: 'navy',
         title: 'Best shopping lane for you: stay inside trusted categories',
         description: 'Your review history shows clear category confidence, making this the simplest way to keep shopping with low friction.',
         cta: 'category',
@@ -1901,6 +1936,23 @@ export default function Orders() {
     setLaneHistoryKeys((current) => [laneKey, ...current.filter((entry) => entry !== laneKey)].slice(0, 4));
   };
 
+  const getProductPath = (value) => {
+    if (!value) return '/shop';
+
+    if (typeof value === 'string' || typeof value === 'number') {
+      return `/product/${value}`;
+    }
+
+    const resolvedId =
+      value?._id ||
+      value?.id ||
+      value?.productId ||
+      value?.product ||
+      '';
+
+    return resolvedId ? `/product/${resolvedId}` : '/shop';
+  };
+
   const refreshReviewInsight = async (productId) => {
     const { data } = await axiosPrivate.get(`/products/${productId}/reviews`);
     const nextInsight = {
@@ -1996,11 +2048,11 @@ export default function Orders() {
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-[32px] border border-emerald-100 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_48%,#fff7ed_100%)] p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)]"
+          className="overflow-hidden rounded-[32px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#ffffff_0%,#eff6ff_48%,#fff7ed_100%)] p-6 shadow-[0_24px_50px_rgba(15,23,42,0.08)]"
         >
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-700">Customer account</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Customer account</p>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Welcome back, {profile.name || user?.name || "shopper"}.</h1>
               <p className="mt-3 max-w-2xl text-slate-600">Track orders, refresh mobile money payments, manage your contact details, and keep an eye on store updates in one clean account view.</p>
             </div>
@@ -2022,7 +2074,7 @@ export default function Orders() {
               className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.05)]"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+                <div className="rounded-2xl bg-slate-100 p-3 text-[#102A43]">
                   <FiUser size={18} />
                 </div>
                 <div>
@@ -2038,7 +2090,7 @@ export default function Orders() {
                     type="text"
                     value={profile.name}
                     onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
-                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#102A43]/35 focus:ring-2 focus:ring-orange-100"
                   />
                 </label>
 
@@ -2048,7 +2100,7 @@ export default function Orders() {
                     type="email"
                     value={profile.email}
                     onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
-                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#102A43]/35 focus:ring-2 focus:ring-orange-100"
                   />
                 </label>
 
@@ -2056,10 +2108,10 @@ export default function Orders() {
                   <span className="text-sm font-semibold text-slate-700">Mobile phone</span>
                   <input
                     type="tel"
-                    value={profile.businessPhone}
-                    onChange={(event) => setProfile((current) => ({ ...current, businessPhone: event.target.value }))}
+                    value={profile.phone}
+                    onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
                     placeholder="07xxxxxxxx"
-                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#102A43]/35 focus:ring-2 focus:ring-orange-100"
                   />
                 </label>
 
@@ -2080,7 +2132,7 @@ export default function Orders() {
               className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.05)]"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-amber-50 p-3 text-amber-600">
+                <div className="rounded-2xl bg-orange-50 p-3 text-orange-600">
                   <FiMapPin size={18} />
                 </div>
                 <div>
@@ -2095,12 +2147,16 @@ export default function Orders() {
                   <p className="mt-2 flex items-center gap-2 font-semibold text-slate-900"><FiPhone /> {latestContactPhone}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Account created</p>
+                  <p className="mt-2 font-semibold text-slate-900">{joinedAtLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Latest delivery address</p>
                   <p className="mt-2 font-semibold text-slate-900">{latestDeliveryAddress}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Total spend</p>
-                  <p className="mt-2 text-xl font-black text-emerald-700">TZS {Number(orderStats.spent || 0).toLocaleString()}</p>
+                  <p className="mt-2 text-xl font-black text-[#102A43]">TZS {Number(orderStats.spent || 0).toLocaleString()}</p>
                 </div>
               </div>
             </motion.section>
@@ -2117,7 +2173,7 @@ export default function Orders() {
                   <h2 id="wishlist" className="mt-1 text-lg font-black text-slate-900">Your wishlist</h2>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+                  <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
                     {savedProducts.length} saved
                   </div>
                   <button
@@ -2149,11 +2205,11 @@ export default function Orders() {
                             compact
                           />
                         </div>
-                        <p className="mt-1 text-sm font-bold text-emerald-700">TZS {Number(product.price || 0).toLocaleString()}</p>
+                        <p className="mt-1 text-sm font-bold text-[#102A43]">TZS {Number(product.price || 0).toLocaleString()}</p>
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-3 text-xs">
-                      <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-200 text-slate-500"}`}>
+                      <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-slate-100 text-[#102A43]" : "bg-slate-200 text-slate-500"}`}>
                         {Number(product.countInStock || 0) > 0 ? `${Number(product.countInStock || 0)} ready now` : "Currently unavailable"}
                       </span>
                     </div>
@@ -2172,7 +2228,7 @@ export default function Orders() {
                       <button
                         type="button"
                         onClick={() => removeSavedProduct(product._id)}
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                        className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                       >
                         Remove
                       </button>
@@ -2197,7 +2253,7 @@ export default function Orders() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Favorite stores</p>
                   <h2 className="mt-1 text-lg font-black text-slate-900">Your seller shortcuts</h2>
                 </div>
-                <div className="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+                <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
                   {favoriteStoreCount} saved
                 </div>
               </div>
@@ -2218,7 +2274,7 @@ export default function Orders() {
                           />
                         </div>
                         {Number(store.startingPrice || 0) > 0 ? (
-                          <p className="mt-1 text-sm font-bold text-emerald-700">Starts from TZS {Number(store.startingPrice || 0).toLocaleString()}</p>
+                          <p className="mt-1 text-sm font-bold text-[#102A43]">Starts from TZS {Number(store.startingPrice || 0).toLocaleString()}</p>
                         ) : null}
                       </div>
                     </div>
@@ -2229,7 +2285,7 @@ export default function Orders() {
                       <button
                         type="button"
                         onClick={() => handleRemoveFavoriteStore(store)}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                       >
                         <FiHeart /> Remove
                       </button>
@@ -2268,13 +2324,13 @@ export default function Orders() {
                   const saved = isSavedProduct(product._id);
 
                   return (
-                    <div key={product._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:border-emerald-200 hover:bg-white">
+                    <div key={product._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:border-[#102A43]/15 hover:bg-white">
                       <div className="flex items-center gap-3">
                         <Link to={`/product/${product._id}`} className="block shrink-0">
                           <img src={product.image} alt={product.name} className="h-16 w-16 rounded-2xl object-cover" />
                         </Link>
                         <div className="min-w-0 flex-1">
-                          <Link to={`/product/${product._id}`} className="block truncate font-semibold text-slate-900 hover:text-emerald-700">
+                          <Link to={`/product/${product._id}`} className="block truncate font-semibold text-slate-900 hover:text-[#102A43]">
                             {product.name}
                           </Link>
                           <p className="mt-1 text-sm text-slate-500">{product.vendor?.name || "Marketplace seller"}</p>
@@ -2285,7 +2341,7 @@ export default function Orders() {
                               compact
                             />
                           </div>
-                          <p className="mt-1 text-sm font-bold text-emerald-700">TZS {Number(product.price || 0).toLocaleString()}</p>
+                          <p className="mt-1 text-sm font-bold text-[#102A43]">TZS {Number(product.price || 0).toLocaleString()}</p>
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -2297,7 +2353,7 @@ export default function Orders() {
                           onClick={() => handleRecentToggleSaved(product)}
                           className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                             saved
-                              ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                              ? "border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
                               : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >
@@ -2378,7 +2434,7 @@ export default function Orders() {
                     onClick={() => notificationPreferences.setSoundEnabled(!notificationPreferences.soundEnabled)}
                     className={`rounded-full border px-3 py-1 ${
                       notificationPreferences.soundEnabled
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                        ? "border-orange-300 bg-orange-50 text-orange-700"
                         : "border-slate-200 bg-white text-slate-500"
                     }`}
                   >
@@ -2389,7 +2445,7 @@ export default function Orders() {
                     onClick={() => notificationPreferences.setVibrationEnabled(!notificationPreferences.vibrationEnabled)}
                     className={`rounded-full border px-3 py-1 ${
                       notificationPreferences.vibrationEnabled
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                        ? "border-orange-300 bg-orange-50 text-orange-700"
                         : "border-slate-200 bg-white text-slate-500"
                     }`}
                   >
@@ -2415,7 +2471,7 @@ export default function Orders() {
                     className={`rounded-2xl border px-4 py-4 ${
                       notification.read
                         ? "border-slate-200 bg-slate-50"
-                        : "border-emerald-200 bg-emerald-50"
+                        : "border-orange-200 bg-orange-50"
                     }`}
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -2433,7 +2489,7 @@ export default function Orders() {
                         <button
                           type="button"
                           onClick={() => markNotificationRead(notification._id)}
-                          className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3 py-2 text-sm font-medium text-emerald-700"
+                          className="inline-flex items-center gap-2 rounded-full border border-orange-300 bg-white px-3 py-2 text-sm font-medium text-orange-700"
                         >
                           <FiCheck /> Mark as read
                         </button>
@@ -2467,10 +2523,10 @@ export default function Orders() {
                     <span className="rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700">
                       {orderStats.awaitingPayment} awaiting payment
                     </span>
-                    <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#102A43]">
                       {orderStats.movingOrders} moving through fulfillment
                     </span>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#102A43]">
                       {orderStats.deliveredOrders} delivered
                     </span>
                   </div>
@@ -2480,12 +2536,12 @@ export default function Orders() {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Before payment clears</p>
                     <p className="mt-2">Approve the mobile money prompt on your phone, then use the card action to refresh the result if needed.</p>
                   </div>
-                  <div className="rounded-[24px] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] px-4 py-4 text-sm text-slate-600">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-700">While we prepare delivery</p>
+                  <div className="rounded-[24px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] px-4 py-4 text-sm text-slate-600">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#102A43]">While we prepare delivery</p>
                     <p className="mt-2">Once payment is confirmed, keep an eye on the journey row for packing and delivery progress.</p>
                   </div>
-                  <div className="rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,#ecfdf5_0%,#f8fafc_100%)] px-4 py-4 text-sm text-slate-600">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">While your order is active</p>
+                  <div className="rounded-[24px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] px-4 py-4 text-sm text-slate-600">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#102A43]">While your order is active</p>
                     <p className="mt-2">Pending mobile money orders still refresh automatically every 15 seconds while a payment or delivery update is in motion.</p>
                   </div>
                 </div>
@@ -2505,7 +2561,7 @@ export default function Orders() {
                       <span className="rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700">
                         {reviewPromptSummary.pending} waiting for your review
                       </span>
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#102A43]">
                         {reviewPromptSummary.completed} already reviewed
                       </span>
                     </div>
@@ -2514,15 +2570,15 @@ export default function Orders() {
               ) : null}
 
               {recentReorder ? (
-                <div className="rounded-[28px] border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#f8fafc_100%)] p-5 shadow-[0_16px_30px_rgba(16,185,129,0.10)]">
+                <div className="rounded-[28px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] p-5 shadow-[0_16px_30px_rgba(15,23,42,0.10)]">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready to check out again</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#102A43]">Ready to check out again</p>
                       <h3 className="mt-1 text-lg font-black text-slate-900">Items from order #{String(recentReorder.orderId || "").slice(-6)} are now in your cart</h3>
                       <p className="mt-2 text-sm text-slate-600">{recentReorder.addedLines} item {recentReorder.addedLines === 1 ? "line" : "lines"} added back to your cart{recentReorder.skippedLines ? `, while ${recentReorder.skippedLines} ${recentReorder.skippedLines === 1 ? "line is" : "lines are"} unavailable right now.` : "."}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Link to="/cart" className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5">
+                      <Link to="/cart" className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5">
                         <FiShoppingBag /> Review cart
                       </Link>
                       <Link to="/shop" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
@@ -2556,10 +2612,10 @@ export default function Orders() {
               ) : null}
 
           {reviewCelebration ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-cyan-50 px-5 py-5 shadow-[0_18px_50px_rgba(16,185,129,0.12)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.10)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Review saved
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -2578,13 +2634,13 @@ export default function Orders() {
                         setReviewCelebration(null);
                         openReviewModal(nextReviewTarget.item, nextReviewTarget.insight);
                       }}
-                      className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-400 hover:bg-amber-200"
+                      className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-800 transition hover:border-orange-400 hover:bg-orange-200"
                     >
                       Review next item
                     </button>
                   ) : null}
                   <Link
-                    to={`/product/${reviewCelebration.productId}`}
+                    to={getProductPath(reviewCelebration.productId)}
                     className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
                   >
                     View item
@@ -2600,7 +2656,7 @@ export default function Orders() {
                   <button
                     type="button"
                     onClick={() => setReviewCelebration(null)}
-                    className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-200"
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-[#102A43] transition hover:border-slate-300 hover:bg-slate-200"
                   >
                     Dismiss
                   </button>
@@ -2610,7 +2666,7 @@ export default function Orders() {
           ) : null}
 
           {reviewHomecoming ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(236,253,245,0.9),_rgba(224,242,254,0.9))] px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(239,246,255,0.92),_rgba(255,247,237,0.92))] px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
                   <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
@@ -2636,7 +2692,7 @@ export default function Orders() {
 
                   {reviewHomecoming.primaryAction === 'rebuy' && reviewReadyToBuyAgain[0] ? (
                     <Link
-                      to={`/product/${reviewReadyToBuyAgain[0].productId}`}
+                      to={getProductPath(reviewReadyToBuyAgain[0].productId)}
                       className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
                       {reviewHomecoming.primaryLabel}
@@ -2666,13 +2722,9 @@ export default function Orders() {
           {bestShoppingLane ? (
             <section
               className={`mb-6 overflow-hidden rounded-[2rem] border px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] ${
-                bestShoppingLane.tone === 'emerald'
-                  ? 'border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-lime-50'
-                  : bestShoppingLane.tone === 'sky'
-                    ? 'border-sky-200 bg-gradient-to-r from-sky-50 via-white to-cyan-50'
-                    : bestShoppingLane.tone === 'cyan'
-                      ? 'border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-sky-50'
-                      : 'border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50'
+                bestShoppingLane.tone === 'navy'
+                  ? 'border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50'
+                  : 'border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50'
               }`}
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -2695,7 +2747,7 @@ export default function Orders() {
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/80">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-slate-900 via-emerald-500 to-cyan-500 transition-all duration-500"
+                          className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400 transition-all duration-500"
                           style={{ width: `${bestShoppingLaneConfidence.score}%` }}
                         />
                       </div>
@@ -2740,7 +2792,7 @@ export default function Orders() {
 
                   {bestShoppingLane.cta === 'rebuy' && reviewReadyToBuyAgain[0] ? (
                     <Link
-                      to={`/product/${reviewReadyToBuyAgain[0].productId}`}
+                      to={getProductPath(reviewReadyToBuyAgain[0].productId)}
                       className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
                       {bestShoppingLane.label}
@@ -2817,7 +2869,7 @@ export default function Orders() {
                         <button
                           type="button"
                           onClick={() => chooseShoppingLane(lane.key)}
-                          className="mb-3 inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                          className="mb-3 inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:border-orange-300 hover:bg-orange-100"
                         >
                           Make this my main lane
                         </button>
@@ -2834,7 +2886,7 @@ export default function Orders() {
 
                         {lane.key === 'rebuy' && reviewReadyToBuyAgain[0] ? (
                           <Link
-                            to={`/product/${reviewReadyToBuyAgain[0].productId}`}
+                            to={getProductPath(reviewReadyToBuyAgain[0].productId)}
                             className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
                           >
                             {lane.label}
@@ -2907,10 +2959,8 @@ export default function Orders() {
             <section
               className={`sticky top-20 z-20 mb-6 overflow-hidden rounded-[2rem] border px-5 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur ${
                 shopperActionBar.tone === 'amber'
-                  ? 'border-amber-200 bg-amber-50/95'
-                  : shopperActionBar.tone === 'emerald'
-                    ? 'border-emerald-200 bg-emerald-50/95'
-                    : 'border-sky-200 bg-sky-50/95'
+                  ? 'border-orange-200 bg-orange-50/95'
+                  : 'border-[#102A43]/10 bg-slate-100/95'
               }`}
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -2949,7 +2999,7 @@ export default function Orders() {
 
                   {shopperActionBar.cta === 'rebuy' && reviewReadyToBuyAgain[0] ? (
                     <Link
-                      to={`/product/${reviewReadyToBuyAgain[0].productId}`}
+                      to={getProductPath(reviewReadyToBuyAgain[0].productId)}
                       className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
                       {shopperActionBar.label}
@@ -2970,10 +3020,10 @@ export default function Orders() {
           ) : null}
 
           {reviewReminderItems.length ? (
-            <section id="review-reminders" className="mb-6 overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(251,191,36,0.12)]">
+            <section id="review-reminders" className="mb-6 overflow-hidden rounded-[2rem] border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-orange-100 px-5 py-5 shadow-[0_18px_50px_rgba(242,140,40,0.12)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-orange-600">
                     Review reminders
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -2998,7 +3048,7 @@ export default function Orders() {
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/80">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-500 transition-all duration-500"
+                          className="h-full rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-[#102A43] transition-all duration-500"
                           style={{ width: `${reviewCompletionRate}%` }}
                         />
                       </div>
@@ -3010,7 +3060,7 @@ export default function Orders() {
                     <button
                       type="button"
                       onClick={() => openReviewModal(nextReviewTarget.item, nextReviewTarget.insight)}
-                      className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-100 px-4 py-2 text-xs font-semibold text-amber-800 transition hover:border-amber-400 hover:bg-amber-200"
+                      className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-100 px-4 py-2 text-xs font-semibold text-orange-800 transition hover:border-orange-400 hover:bg-orange-200"
                     >
                       Review next item
                     </button>
@@ -3024,7 +3074,7 @@ export default function Orders() {
                     </span>
                   ))}
                   {reviewReminderItems.length > 3 ? (
-                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-4 py-2 text-xs font-semibold text-amber-700">
+                    <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-100 px-4 py-2 text-xs font-semibold text-orange-700">
                       +{reviewReminderItems.length - 3} more
                     </span>
                   ) : null}
@@ -3034,7 +3084,7 @@ export default function Orders() {
           ) : null}
 
           {nextBestShoppingMoves.length ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-emerald-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
                   <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
@@ -3080,9 +3130,9 @@ export default function Orders() {
 
                       {move.key === 'rebuy' ? (
                         <Link
-                          to={`/product/${move.productId}`}
-                          className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                        >
+                      to={getProductPath(move.productId)}
+                      className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
                           View item
                         </Link>
                       ) : null}
@@ -3112,10 +3162,10 @@ export default function Orders() {
           ) : null}
 
           {!reviewReminderItems.length && reviewCompletedCount > 0 ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-teal-50 px-5 py-5 shadow-[0_18px_50px_rgba(16,185,129,0.1)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     You&apos;re caught up
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3144,10 +3194,10 @@ export default function Orders() {
           ) : null}
 
           {reviewerSnapshot.totalReviews > 0 ? (
-            <section id="shopper-trust-profile" className="mb-6 overflow-hidden rounded-[2rem] border border-fuchsia-200 bg-gradient-to-r from-fuchsia-50 via-white to-rose-50 px-5 py-5 shadow-[0_18px_50px_rgba(217,70,239,0.08)]">
+            <section id="shopper-trust-profile" className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-fuchsia-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Your shopper trust profile
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3156,12 +3206,12 @@ export default function Orders() {
                   <p className="mt-2 text-sm text-slate-600">
                     Every review you leave makes it easier for the next shopper to choose with confidence.
                   </p>
-                  <div className="mt-4 rounded-[1.5rem] border border-fuchsia-100 bg-white/80 px-4 py-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-500">
+                  <div className="mt-4 rounded-[1.5rem] border border-[#102A43]/10 bg-white/80 px-4 py-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#102A43]">
                       Personal shopper summary
                     </p>
                     <div className="mt-3">
-                      <span className="inline-flex items-center rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-700">
+                      <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                         {shopperPersonaTag}
                       </span>
                     </div>
@@ -3171,19 +3221,19 @@ export default function Orders() {
                     <div className="mt-3 space-y-2">
                       {shopperStrengths.map((strength) => (
                         <div key={strength} className="flex items-start gap-2 text-sm text-slate-600">
-                          <span className="mt-1 h-2 w-2 rounded-full bg-fuchsia-400" />
+                          <span className="mt-1 h-2 w-2 rounded-full bg-[#102A43]" />
                           <span>{strength}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 rounded-[1.25rem] border border-fuchsia-100 bg-fuchsia-50/60 px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-fuchsia-500">
+                    <div className="mt-4 rounded-[1.25rem] border border-orange-200 bg-orange-50/70 px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                         Next growth areas
                       </p>
                       <div className="mt-3 space-y-2">
                         {shopperGrowthAreas.map((area) => (
                           <div key={area} className="flex items-start gap-2 text-sm text-slate-600">
-                            <span className="mt-1 h-2 w-2 rounded-full bg-rose-400" />
+                            <span className="mt-1 h-2 w-2 rounded-full bg-orange-400" />
                             <span>{area}</span>
                           </div>
                         ))}
@@ -3198,23 +3248,23 @@ export default function Orders() {
                   <div className="mt-4 rounded-[1.5rem] border border-white/90 bg-white/80 px-4 py-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-500">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#102A43]">
                           Current milestone
                         </p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">{reviewerMilestone.title}</p>
                         <p className="mt-1 text-sm text-slate-500">{reviewerMilestone.progressLabel}</p>
                       </div>
-                      <span className="inline-flex items-center rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-700">
+                      <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
                         {reviewerMilestoneProgress}% progress
                       </span>
                     </div>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-fuchsia-100">
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400 transition-all duration-500"
                         style={{ width: `${reviewerMilestoneProgress}%` }}
                       />
                     </div>
-                    <div className="mt-4 rounded-[1.25rem] border border-fuchsia-100 bg-fuchsia-50/70 px-4 py-3">
+                    <div className="mt-4 rounded-[1.25rem] border border-[#102A43]/10 bg-slate-50 px-4 py-3">
                       <p className="text-sm font-semibold text-slate-900">{reviewerMilestoneNudge.headline}</p>
                       <p className="mt-1 text-sm text-slate-500">{reviewerMilestoneNudge.detail}</p>
                     </div>
@@ -3223,14 +3273,14 @@ export default function Orders() {
               </div>
 
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-[1.5rem] border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-rose-50 p-4 shadow-sm md:col-span-2 xl:col-span-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-500">Trust score</p>
+                <div className="rounded-[1.5rem] border border-[#102A43]/10 bg-gradient-to-br from-slate-100 via-white to-orange-50 p-4 shadow-sm md:col-span-2 xl:col-span-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#102A43]">Trust score</p>
                   <p className="mt-3 text-4xl font-semibold text-slate-900">{reviewerTrustScore.score}</p>
                   <p className="mt-2 text-sm font-semibold text-slate-900">{reviewerTrustScore.label}</p>
                   <p className="mt-2 text-sm text-slate-500">{reviewerTrustScore.description}</p>
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/90">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400 transition-all duration-500"
                       style={{ width: `${reviewerTrustScore.progressInTier}%` }}
                     />
                   </div>
@@ -3250,7 +3300,7 @@ export default function Orders() {
                           </div>
                           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/90">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 transition-all duration-500"
+                              className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400 transition-all duration-500"
                               style={{ width: `${width}%` }}
                             />
                           </div>
@@ -3259,8 +3309,8 @@ export default function Orders() {
                     })}
                   </div>
                   {trustScoreHint ? (
-                    <div className="mt-4 rounded-[1.25rem] border border-fuchsia-100 bg-white/80 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-fuchsia-500">
+                    <div className="mt-4 rounded-[1.25rem] border border-orange-200 bg-white/80 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
                         Fastest way to grow
                       </p>
                       <p className="mt-2 text-sm text-slate-600">{trustScoreHint}</p>
@@ -3309,7 +3359,7 @@ export default function Orders() {
                           </div>
                           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 transition-all duration-500"
+                              className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400 transition-all duration-500"
                               style={{ width: `${width}%` }}
                             />
                           </div>
@@ -3374,7 +3424,7 @@ export default function Orders() {
                     {reviewerAchievements.map((achievement) => (
                       <div
                         key={achievement.key}
-                        className="rounded-[1.25rem] border border-fuchsia-100 bg-gradient-to-r from-fuchsia-50 via-white to-rose-50 px-4 py-4"
+                        className="rounded-[1.25rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-4 py-4"
                       >
                         <p className="text-sm font-semibold text-slate-900">{achievement.title}</p>
                         <p className="mt-1 text-sm text-slate-500">{achievement.description}</p>
@@ -3391,7 +3441,7 @@ export default function Orders() {
                     {shopperHabits.map((habit) => (
                       <div
                         key={habit.key}
-                        className="rounded-[1.25rem] border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-cyan-50 px-4 py-4"
+                        className="rounded-[1.25rem] border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-slate-100 px-4 py-4"
                       >
                         <p className="text-sm font-semibold text-slate-900">{habit.title}</p>
                         <p className="mt-1 text-sm text-slate-500">{habit.description}</p>
@@ -3439,10 +3489,10 @@ export default function Orders() {
           ) : null}
 
           {reviewImpactItems.length ? (
-            <section id="review-impact" className="mb-6 overflow-hidden rounded-[2rem] border border-rose-200 bg-gradient-to-r from-rose-50 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(244,63,94,0.08)]">
+            <section id="review-impact" className="mb-6 overflow-hidden rounded-[2rem] border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-slate-100 px-5 py-5 shadow-[0_18px_50px_rgba(242,140,40,0.1)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-rose-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-orange-700">
                     Your review impact
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3460,12 +3510,12 @@ export default function Orders() {
                     key={`${item.orderId}-${item.productId}`}
                     className="overflow-hidden rounded-[1.6rem] border border-white/90 bg-white/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                   >
-                    <Link to={`/product/${item.productId}`} className="block">
+                    <Link to={getProductPath(item.productId)} className="block">
                       <div className="h-44 overflow-hidden bg-slate-100">
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]" />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-rose-50 text-sm font-medium text-slate-500">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-orange-50 text-sm font-medium text-slate-500">
                             Reviewed item
                           </div>
                         )}
@@ -3474,7 +3524,7 @@ export default function Orders() {
 
                     <div className="space-y-3 px-4 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">
+                        <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                           Your review is live
                         </span>
                         <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3483,7 +3533,7 @@ export default function Orders() {
                       </div>
 
                       <div>
-                        <Link to={`/product/${item.productId}`} className="text-base font-semibold text-slate-900 transition hover:text-rose-700">
+                        <Link to={getProductPath(item.productId)} className="text-base font-semibold text-slate-900 transition hover:text-[#102A43]">
                           {item.name}
                         </Link>
                         <p className="mt-1 text-sm text-slate-500">
@@ -3499,7 +3549,7 @@ export default function Orders() {
                       <MarketplaceRating summary={item.summary} size="md" />
 
                       {item.userReview?.title || item.userReview?.comment ? (
-                        <div className="rounded-[1.25rem] border border-rose-100 bg-rose-50/70 px-4 py-3">
+                        <div className="rounded-[1.25rem] border border-orange-200 bg-orange-50/70 px-4 py-3">
                           {item.userReview?.title ? (
                             <p className="text-sm font-semibold text-slate-900">
                               {item.userReview.title}
@@ -3516,7 +3566,7 @@ export default function Orders() {
 
                       <div className="flex flex-wrap gap-3">
                         <Link
-                          to={`/product/${item.productId}`}
+                          to={getProductPath(item.productId)}
                           className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           View item
@@ -3550,10 +3600,10 @@ export default function Orders() {
           ) : null}
 
           {reviewReadyToBuyAgain.length ? (
-            <section id="ready-to-order-again" className="mb-6 overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-lime-50 px-5 py-5 shadow-[0_18px_50px_rgba(34,197,94,0.08)]">
+            <section id="ready-to-order-again" className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Ready to order again
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3577,12 +3627,12 @@ export default function Orders() {
                     key={`rebuy-${item.orderId}-${item.productId}`}
                     className="overflow-hidden rounded-[1.6rem] border border-white/90 bg-white/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                   >
-                    <Link to={`/product/${item.productId}`} className="block">
+                    <Link to={getProductPath(item.productId)} className="block">
                       <div className="h-44 overflow-hidden bg-slate-100">
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]" />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-emerald-50 text-sm font-medium text-slate-500">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-orange-50 text-sm font-medium text-slate-500">
                             Ready to buy again
                           </div>
                         )}
@@ -3591,7 +3641,7 @@ export default function Orders() {
 
                     <div className="space-y-3 px-4 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                           Reorder-ready
                         </span>
                         <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3600,7 +3650,7 @@ export default function Orders() {
                       </div>
 
                       <div>
-                        <Link to={`/product/${item.productId}`} className="text-base font-semibold text-slate-900 transition hover:text-emerald-700">
+                        <Link to={getProductPath(item.productId)} className="text-base font-semibold text-slate-900 transition hover:text-[#102A43]">
                           {item.name}
                         </Link>
                         <p className="mt-1 text-sm text-slate-500">
@@ -3615,7 +3665,7 @@ export default function Orders() {
                           TZS {Number(item.price || 0).toLocaleString()}
                         </p>
                         <Link
-                          to={`/product/${item.productId}`}
+                          to={getProductPath(item.productId)}
                           className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           View item
@@ -3629,10 +3679,10 @@ export default function Orders() {
           ) : null}
 
           {trustedCategories.length ? (
-            <section id="trusted-categories" className="mb-6 overflow-hidden rounded-[2rem] border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-sky-50 px-5 py-5 shadow-[0_18px_50px_rgba(6,182,212,0.08)]">
+            <section id="trusted-categories" className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-cyan-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Trusted categories
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3657,7 +3707,7 @@ export default function Orders() {
                     className="rounded-[1.6rem] border border-white/90 bg-white/90 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                      <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                         Trusted category
                       </span>
                       <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3672,7 +3722,7 @@ export default function Orders() {
 
                     <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-400"
+                        className="h-full rounded-full bg-gradient-to-r from-[#102A43] via-[#1C4268] to-orange-400"
                         style={{ width: `${Math.max(12, Math.min(100, Math.round((category.averageRatingGiven / 5) * 100)))}%` }}
                       />
                     </div>
@@ -3692,10 +3742,10 @@ export default function Orders() {
           ) : null}
 
           {topReviewHighlights.length ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-cyan-50 px-5 py-5 shadow-[0_18px_50px_rgba(16,185,129,0.12)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Top review highlights
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3719,12 +3769,12 @@ export default function Orders() {
                     key={product._id}
                     className="overflow-hidden rounded-[1.6rem] border border-white/80 bg-white/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                   >
-                    <Link to={`/product/${product._id}`} className="block">
+                      <Link to={getProductPath(product)} className="block">
                       <div className="h-44 overflow-hidden bg-slate-100">
                         {product.image ? (
                           <img src={product.image} alt={product.name} className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]" />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-emerald-50 text-sm font-medium text-slate-500">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-orange-50 text-sm font-medium text-slate-500">
                             Product preview
                           </div>
                         )}
@@ -3733,7 +3783,7 @@ export default function Orders() {
 
                     <div className="space-y-3 px-4 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                           Shopper favorite
                         </span>
                         <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3742,7 +3792,7 @@ export default function Orders() {
                       </div>
 
                       <div>
-                        <Link to={`/product/${product._id}`} className="text-base font-semibold text-slate-900 transition hover:text-emerald-700">
+                          <Link to={getProductPath(product)} className="text-base font-semibold text-slate-900 transition hover:text-[#102A43]">
                           {product.name}
                         </Link>
                         <p className="mt-1 text-sm text-slate-500">
@@ -3757,7 +3807,7 @@ export default function Orders() {
                           TZS {Number(product.price || 0).toLocaleString()}
                         </p>
                         <Link
-                          to={`/product/${product._id}`}
+                          to={getProductPath(product)}
                           className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           View item
@@ -3771,10 +3821,10 @@ export default function Orders() {
           ) : null}
 
           {reviewLedStores.length ? (
-            <section id="trusted-stores" className="mb-6 overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-5 shadow-[0_18px_50px_rgba(14,165,233,0.1)]">
+            <section id="trusted-stores" className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-sky-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     Trusted stores
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3793,7 +3843,7 @@ export default function Orders() {
                     className="rounded-[1.6rem] border border-white/90 bg-white/90 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                      <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                         Trusted by shoppers
                       </span>
                       <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3839,7 +3889,7 @@ export default function Orders() {
                       </Link>
                       {store.bestProduct ? (
                         <Link
-                          to={`/product/${store.bestProduct._id}`}
+                          to={getProductPath(store.bestProduct)}
                           className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
                         >
                           View top item
@@ -3853,10 +3903,10 @@ export default function Orders() {
           ) : null}
 
           {reviewedStoreFinds.length ? (
-            <section className="mb-6 overflow-hidden rounded-[2rem] border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-indigo-50 px-5 py-5 shadow-[0_18px_50px_rgba(99,102,241,0.1)]">
+            <section className="mb-6 overflow-hidden rounded-[2rem] border border-[#102A43]/10 bg-gradient-to-r from-slate-100 via-white to-orange-50 px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-violet-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#102A43]">
                     More from stores you reviewed
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-slate-900">
@@ -3887,12 +3937,12 @@ export default function Orders() {
                       key={product._id}
                       className="overflow-hidden rounded-[1.6rem] border border-white/90 bg-white/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
                     >
-                      <Link to={`/product/${product._id}`} className="block">
+                      <Link to={getProductPath(product)} className="block">
                         <div className="h-44 overflow-hidden bg-slate-100">
                           {product.image ? (
                             <img src={product.image} alt={product.name} className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]" />
                           ) : (
-                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-violet-50 text-sm font-medium text-slate-500">
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-orange-50 text-sm font-medium text-slate-500">
                               Product preview
                             </div>
                           )}
@@ -3901,7 +3951,7 @@ export default function Orders() {
 
                       <div className="space-y-3 px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700">
+                          <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
                             Reviewed store pick
                           </span>
                           <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3910,7 +3960,7 @@ export default function Orders() {
                         </div>
 
                         <div>
-                          <Link to={`/product/${product._id}`} className="text-base font-semibold text-slate-900 transition hover:text-violet-700">
+                          <Link to={getProductPath(product)} className="text-base font-semibold text-slate-900 transition hover:text-[#102A43]">
                             {product.name}
                           </Link>
                           <p className="mt-1 text-sm text-slate-500">
@@ -3928,7 +3978,7 @@ export default function Orders() {
                             TZS {Number(product.price || 0).toLocaleString()}
                           </p>
                           <Link
-                            to={`/product/${product._id}`}
+                            to={getProductPath(product)}
                             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                           >
                             View item
@@ -3953,13 +4003,14 @@ export default function Orders() {
                     key={order._id}
                     order={order}
                     busy={busyId === order._id}
-                onRefreshPaymentStatus={refreshPaymentStatus}
-                onRetryPaymentPush={retryPaymentPush}
-                onReorder={handleReorder}
-                getReviewInsight={getReviewInsight}
-                onOpenReview={openReviewModal}
-              />
-              ))
+                    onRefreshPaymentStatus={refreshPaymentStatus}
+                    onRetryPaymentPush={retryPaymentPush}
+                    onReorder={handleReorder}
+                    onReportDeliveryIssue={reportDeliveryIssue}
+                    getReviewInsight={getReviewInsight}
+                    onOpenReview={openReviewModal}
+                  />
+                ))
               )}
             </motion.section>
           </div>
@@ -4011,7 +4062,7 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
       <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/15 bg-white shadow-[0_30px_120px_rgba(15,23,42,0.3)]">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#102A43]">
               Shopper review
             </p>
             <h3 className="mt-2 text-2xl font-semibold text-slate-900">{productName}</h3>
@@ -4036,7 +4087,7 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
               {productImage ? (
                 <img src={productImage} alt={productName} className="h-52 w-full object-cover" />
               ) : (
-                <div className="flex h-52 items-center justify-center bg-gradient-to-br from-slate-200 via-white to-emerald-50 text-sm font-medium text-slate-500">
+                <div className="flex h-52 items-center justify-center bg-gradient-to-br from-slate-200 via-white to-orange-50 text-sm font-medium text-slate-500">
                   Product preview
                 </div>
               )}
@@ -4058,9 +4109,9 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
           <form className="space-y-5" onSubmit={onSubmit}>
             {activeReview?.justSubmitted ? (
               <div className="space-y-3">
-                <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                <div className="rounded-[1.5rem] border border-[#102A43]/10 bg-slate-100 px-4 py-4 text-sm text-[#102A43]">
                   <p className="font-semibold">Your review is now live for shoppers.</p>
-                  <p className="mt-1 text-emerald-700">
+                  <p className="mt-1 text-[#102A43]">
                     Thank you for sharing helpful buying feedback for {productName}.
                   </p>
                 </div>
@@ -4117,7 +4168,7 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
                       }
                       className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                         selected
-                          ? 'border-amber-300 bg-amber-50 text-amber-700 shadow-sm'
+                          ? 'border-orange-300 bg-orange-50 text-orange-700 shadow-sm'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
                       }`}
                     >
@@ -4149,7 +4200,7 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
                   )
                 }
                 placeholder="What should shoppers notice first?"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#102A43]/35 focus:ring-4 focus:ring-orange-100"
               />
             </div>
 
@@ -4173,7 +4224,7 @@ function QuickReviewModal({ activeReview, setActiveReview, submitting, onClose, 
                   )
                 }
                 placeholder="Tell shoppers about quality, fit, delivery, or anything that helped you decide."
-                className="mt-2 w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100"
+                className="mt-2 w-full rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#102A43]/35 focus:ring-4 focus:ring-orange-100"
               />
               <p className="mt-2 text-xs text-slate-400">
                 Keep it clear and helpful. Your review can still be updated later.

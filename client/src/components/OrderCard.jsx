@@ -26,12 +26,12 @@ import {
 } from "../utils/mobileMoneyNetworks";
 
 const statusClass = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  paid: "bg-blue-50 text-blue-700 border-blue-200",
-  out_for_delivery: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  pending: "bg-orange-50 text-orange-700 border-orange-200",
+  paid: "bg-slate-100 text-[#102A43] border-slate-200",
+  out_for_delivery: "bg-slate-100 text-[#102A43] border-[#102A43]/10",
   delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
-  refunded: "bg-purple-50 text-purple-700 border-purple-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  refunded: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 const orderStatusMeta = {
@@ -41,7 +41,7 @@ const orderStatusMeta = {
     progress: 0,
     nextTitle: "Finish the payment prompt",
     nextDetail: "Approve the mobile money request on your phone. Once payment is confirmed, we will move this order straight into fulfillment.",
-    tone: "border-amber-200 bg-[linear-gradient(135deg,#fffaf0_0%,#fff7ed_100%)]",
+    tone: "border-orange-200 bg-[linear-gradient(135deg,#fffaf0_0%,#fff7ed_100%)]",
   },
   paid: {
     title: "Payment confirmed",
@@ -49,7 +49,7 @@ const orderStatusMeta = {
     progress: 1,
     nextTitle: "We are preparing your order",
     nextDetail: "Your marketplace order is now queued for packing and delivery assignment. Keep this card nearby for the next movement update.",
-    tone: "border-blue-200 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)]",
+    tone: "border-slate-200 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)]",
   },
   out_for_delivery: {
     title: "Out for delivery",
@@ -57,7 +57,7 @@ const orderStatusMeta = {
     progress: 2,
     nextTitle: "Delivery is in progress",
     nextDetail: "Keep your phone close. The next update should be delivery completion once the rider reaches your address.",
-    tone: "border-indigo-200 bg-[linear-gradient(135deg,#eef2ff_0%,#f8fafc_100%)]",
+    tone: "border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)]",
   },
   delivered: {
     title: "Delivered",
@@ -73,7 +73,7 @@ const orderStatusMeta = {
     progress: 0,
     nextTitle: "This order is no longer active",
     nextDetail: "No more action is needed on this order unless our team shared a follow-up update with you.",
-    tone: "border-rose-200 bg-[linear-gradient(135deg,#fff1f2_0%,#f8fafc_100%)]",
+    tone: "border-red-200 bg-[linear-gradient(135deg,#fff1f2_0%,#f8fafc_100%)]",
   },
   refunded: {
     title: "Refunded",
@@ -81,7 +81,7 @@ const orderStatusMeta = {
     progress: 0,
     nextTitle: "Refund has been recorded",
     nextDetail: "Use the payment reference below if you ever need to cross-check this refund with your support history.",
-    tone: "border-purple-200 bg-[linear-gradient(135deg,#faf5ff_0%,#f8fafc_100%)]",
+    tone: "border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#eef2ff_100%)]",
   },
 };
 
@@ -112,9 +112,9 @@ function TimelineStep({ label, active, complete, isLast }) {
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
             complete
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              ? "border-[#102A43]/15 bg-slate-100 text-[#102A43]"
               : active
-                ? "border-amber-200 bg-amber-50 text-amber-700"
+                ? "border-orange-200 bg-orange-50 text-orange-700"
                 : "border-slate-200 bg-white text-slate-400"
           }`}
         >
@@ -138,6 +138,7 @@ export default function OrderCard({
   onRefreshPaymentStatus,
   onRetryPaymentPush,
   onReorder,
+  onReportDeliveryIssue,
   getReviewInsight,
   onOpenReview,
 }) {
@@ -166,6 +167,7 @@ export default function OrderCard({
     [items]
   );
   const canReorder = items.length > 0 && ["delivered", "cancelled", "refunded"].includes(order.status);
+  const hasDeliveryIssue = Boolean(order.delivery?.issueReportedAt || order.delivery?.issueReason);
   const reviewableItems = useMemo(() => {
     if (order.status !== "delivered") {
       return [];
@@ -205,7 +207,7 @@ export default function OrderCard({
     <article className="rounded-[28px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.96)_100%)] p-5 shadow-[0_20px_40px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(15,23,42,0.10)] md:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-emerald-600">Marketplace order</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#102A43]">Marketplace order</p>
           <h3 className="font-black text-slate-900">#{String(order._id).slice(-6)}</h3>
           <p className="mt-2 text-lg font-black text-slate-900">{meta.title}</p>
           <p className="mt-1 max-w-2xl text-sm text-slate-500">{meta.detail}</p>
@@ -269,7 +271,7 @@ export default function OrderCard({
                 <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
                   Payment: {toLabel(order.paymentMethod || "mobile_money", "mobile money")}
                 </span>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#102A43]">
                   {totalItems} item{totalItems === 1 ? "" : "s"}
                 </span>
               </div>
@@ -300,6 +302,79 @@ export default function OrderCard({
                 <p>We will use these delivery details for the next update on this order.</p>
               )}
             </div>
+
+            {order.status === "delivered" && (order.delivery?.proofRecipient || order.delivery?.proofNote) ? (
+              <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Delivery proof</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Received by</p>
+                    <p className="mt-1 font-semibold text-slate-900">{order.delivery?.proofRecipient || "Not recorded"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rider note</p>
+                    <p className="mt-1 text-sm text-slate-600">{order.delivery?.proofNote || "No note was added for this delivery."}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {order.status === "delivered" ? (
+              <div className={`mt-3 rounded-2xl border px-3 py-3 ${hasDeliveryIssue ? "border-red-200 bg-red-50/70" : "border-slate-200 bg-white/80"}`}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${hasDeliveryIssue ? "text-red-600" : "text-slate-400"}`}>
+                      Delivery support
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {hasDeliveryIssue
+                        ? "Your delivery issue has been recorded for follow-up."
+                        : "If anything about the handoff was wrong, report it here for operations review."}
+                    </p>
+                  </div>
+                  {!hasDeliveryIssue && onReportDeliveryIssue ? (
+                    <button
+                      type="button"
+                      onClick={() => onReportDeliveryIssue(order)}
+                      disabled={busy}
+                      className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Report delivery issue
+                    </button>
+                  ) : null}
+                </div>
+
+                {hasDeliveryIssue ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Reported</p>
+                      <p className="mt-1 font-semibold text-slate-900">{formatDateLabel(order.delivery?.issueReportedAt, "Recently")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Issue status</p>
+                      <p className="mt-1 font-semibold text-slate-900">
+                        {toLabel(order.delivery?.issueStatus || "open", "open")}
+                      </p>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Issue note</p>
+                      <p className="mt-1 text-sm text-slate-600">{order.delivery?.issueReason || "No issue note recorded."}</p>
+                    </div>
+                    {order.delivery?.issueResolutionNote ? (
+                      <div className="sm:col-span-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Resolution update</p>
+                        <p className="mt-1 text-sm text-slate-600">{order.delivery.issueResolutionNote}</p>
+                        {order.delivery?.issueResolvedAt ? (
+                          <p className="mt-2 text-xs font-medium text-emerald-700">
+                            Resolved {formatDateLabel(order.delivery.issueResolvedAt, "recently")}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(135deg,#fffaf5_0%,#f8fafc_100%)] p-4 text-sm text-slate-700">
@@ -345,8 +420,8 @@ export default function OrderCard({
             </div>
 
             {paymentFailureReason ? (
-              <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-rose-700">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-500">Payment issue</p>
+              <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-3 text-red-700">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-500">Payment issue</p>
                 <p className="mt-2 text-sm">{paymentFailureReason}</p>
               </div>
             ) : null}
@@ -355,22 +430,17 @@ export default function OrderCard({
       </div>
 
       {canReorder && onReorder ? (
-        <div className="mt-5 rounded-[24px] border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5_0%,#f8fafc_100%)] p-4">
+        <div className="mt-5 rounded-[24px] border border-slate-200 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Buy again</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#102A43]">Buy again</p>
               <p className="mt-1 text-sm text-slate-600">Add the available items from this order back into your cart and keep shopping from where you left off.</p>
             </div>
-                                {insight?.userReview ? (
-                                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                    Review saved
-                                  </span>
-                                ) : null}
                                 <button
               type="button"
               onClick={() => onReorder(order)}
               disabled={busy}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-50"
             >
               <FiShoppingBag /> Buy again
             </button>
@@ -379,10 +449,10 @@ export default function OrderCard({
       ) : null}
 
       {reviewableItems.length ? (
-        <div className="mt-5 rounded-[24px] border border-amber-200 bg-[linear-gradient(135deg,#fffaf0_0%,#f8fafc_100%)] p-4">
+        <div className="mt-5 rounded-[24px] border border-orange-200 bg-[linear-gradient(135deg,#fffaf0_0%,#f8fafc_100%)] p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Shopper reviews</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">Shopper reviews</p>
               <p className="mt-1 text-sm text-slate-600">
                 Help the next buyer by sharing how these delivered items felt after payment and delivery.
               </p>
@@ -427,8 +497,8 @@ export default function OrderCard({
                       onClick={() => onOpenReview?.(item, insight)}
                       className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                         hasReview
-                          ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                          : "bg-[linear-gradient(135deg,#f59e0b_0%,#ea580c_100%)] text-white hover:-translate-y-0.5"
+                          ? "border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                          : "bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] text-white hover:-translate-y-0.5"
                       }`}
                     >
                       {hasReview ? <FiEdit3 /> : <FiStar />}
@@ -443,12 +513,12 @@ export default function OrderCard({
       ) : null}
 
       {isAwaitingMobilePayment && onRefreshPaymentStatus && onRetryPaymentPush ? (
-        <div className="mt-5 space-y-3 rounded-[24px] border border-amber-200 bg-amber-50/70 p-4">
+        <div className="mt-5 space-y-3 rounded-[24px] border border-orange-200 bg-orange-50/70 p-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-700">
               Payment follow-up
             </p>
-            <p className="mt-1 text-sm text-amber-800">
+            <p className="mt-1 text-sm text-orange-800">
               Check the latest result or send a fresh prompt if the first request expired before you approved it.
             </p>
           </div>
@@ -469,7 +539,7 @@ export default function OrderCard({
                     disabled={busy}
                     className={`rounded-2xl border px-3 py-2 text-left text-sm shadow-sm transition disabled:opacity-60 ${
                       active
-                        ? "border-rose-300 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)]"
+                        ? "border-orange-300 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_100%)]"
                         : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
@@ -495,9 +565,9 @@ export default function OrderCard({
                   Valid prefixes: <span className="font-semibold text-slate-900">{selectedNetworkPrefixes.join(", ") || "N/A"}</span>
                 </p>
                 {selectedNetworkValidation && !selectedNetworkValidation.valid ? (
-                  <p className="mt-2 text-rose-600">{selectedNetworkValidation.message}</p>
+                  <p className="mt-2 text-red-600">{selectedNetworkValidation.message}</p>
                 ) : (
-                  <p className="mt-2 text-emerald-600">This number matches {selectedNetworkLabel}.</p>
+                  <p className="mt-2 text-[#102A43]">This number matches {selectedNetworkLabel}.</p>
                 )}
               </div>
             ) : null}
@@ -516,7 +586,7 @@ export default function OrderCard({
               type="button"
               onClick={() => onRetryPaymentPush(order._id, selectedNetwork)}
               disabled={busy || !selectedNetwork}
-              className="rounded-xl border border-rose-300 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] px-3 py-2 text-sm font-medium text-rose-700 shadow-sm transition hover:border-rose-400 disabled:opacity-50"
+              className="rounded-xl border border-orange-300 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_100%)] px-3 py-2 text-sm font-medium text-orange-700 shadow-sm transition hover:border-orange-400 disabled:opacity-50"
             >
               New payment prompt
             </button>

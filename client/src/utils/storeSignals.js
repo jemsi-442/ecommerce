@@ -2,18 +2,16 @@ const makeBadge = (label, tone) => ({ label, tone });
 
 export const getStoreSignalToneClasses = (tone) => {
   switch (tone) {
-    case "rose":
-      return "bg-rose-500/90 text-white shadow-sm";
-    case "amber":
-      return "bg-amber-500/90 text-white shadow-sm";
-    case "sky":
-      return "bg-sky-500/90 text-white shadow-sm";
-    case "emerald":
-      return "bg-emerald-500/90 text-white shadow-sm";
-    case "emerald-soft":
-      return "bg-emerald-50 text-emerald-700";
-    case "amber-soft":
-      return "bg-amber-50 text-amber-700";
+    case "alert":
+      return "bg-red-500/90 text-white shadow-sm";
+    case "orange":
+      return "bg-orange-500/90 text-white shadow-sm";
+    case "navy":
+      return "bg-[#102A43] text-white shadow-sm";
+    case "navy-soft":
+      return "bg-slate-100 text-[#102A43]";
+    case "orange-soft":
+      return "bg-orange-50 text-orange-700";
     case "slate":
     default:
       return "bg-white/90 text-slate-700 shadow-sm";
@@ -29,21 +27,21 @@ export const getStoreBadges = (store) => {
   const badges = [];
 
   if (reviewCount >= 8 && averageRating >= 4.5) {
-    badges.push(makeBadge("Top rated store", "amber"));
+    badges.push(makeBadge("Top rated store", "orange"));
   } else if (reviewCount >= 3 && averageRating >= 4) {
-    badges.push(makeBadge("Trusted by shoppers", "sky"));
+    badges.push(makeBadge("Trusted by shoppers", "navy"));
   }
 
   if (readyNow >= 5) {
-    badges.push(makeBadge("Ready to ship", "emerald"));
+    badges.push(makeBadge("Ready to ship", "navy"));
   }
 
   if (itemCount >= 6) {
-    badges.push(makeBadge("Growing seller", "amber-soft"));
+    badges.push(makeBadge("Growing seller", "orange-soft"));
   }
 
   if (startingPrice > 0 && startingPrice <= 50000 && itemCount >= 3) {
-    badges.push(makeBadge("Value storefront", "emerald-soft"));
+    badges.push(makeBadge("Value storefront", "navy-soft"));
   }
 
   return badges;

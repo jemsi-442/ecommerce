@@ -25,7 +25,7 @@ export default function VendorLayout() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="flex min-h-screen bg-slate-100 overflow-hidden">
+    <div className="flex h-screen min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eff6ff_38%,#fff7ed_100%)]">
       <VendorSidebar className="hidden lg:flex" />
 
       {mobileSidebarOpen ? (
@@ -45,9 +45,9 @@ export default function VendorLayout() {
         </div>
       ) : null}
 
-      <div className="flex-1 flex min-w-0 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <VendorTopbar onOpenSidebar={() => setMobileSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#fffbeb_0%,#f8fafc_52%,#eef2ff_100%)] p-4 md:p-6 pb-6">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(160deg,#f8fafc_0%,#eff6ff_52%,#fff7ed_100%)] p-4 pb-6 md:p-6">
           <Outlet />
         </main>
         <InternalFooter />

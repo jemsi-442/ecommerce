@@ -7,6 +7,7 @@ const normalizeUser = (user) => (user ? { ...user, role: normalizeRole(user.role
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     try {
@@ -19,6 +20,8 @@ export const AuthProvider = ({ children }) => {
       console.error("Failed to parse user from localStorage");
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+    } finally {
+      setAuthReady(true);
     }
   }, []);
 
@@ -56,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, updateUser, authReady }}>
       {children}
     </AuthContext.Provider>
   );

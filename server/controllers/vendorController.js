@@ -1,7 +1,8 @@
 import asyncHandler from "../middleware/asyncHandler.js";
-import { Order, OrderItem, Product, Rider, User } from "../models/index.js";
+import { AuditLog, Order, OrderItem, Product, Rider, User } from "../models/index.js";
 import ProductService from "../services/ProductService.js";
 import { sendResponse } from "../utils/apiResponse.js";
+import { createNotificationRecord } from "../utils/createNotificationRecord.js";
 import { serializeOrder, serializeUser } from "../utils/serializers.js";
 import { uploadProductImage } from "../middleware/uploadMiddleware.js";
 
@@ -75,6 +76,8 @@ const getPayoutStatus = (status) => {
       return "processing";
   }
 };
+
+const DELIVERY_ISSUE_STATUSES = new Set(["open", "investigating", "resolved"]);
 
 const buildVendorItems = (items, payoutStatus) =>
   items.map((item) => {
@@ -258,4 +261,78 @@ export const getVendorOrders = asyncHandler(async (req, res) => {
       ),
     },
   });
+});
+
+export const updateVendorDeliveryIssueStatus = asyncHandler(async (req, res) => {
+  const order = await Order.findByPk(req.params.id, {
+    include: vendorOrderIncludes,
+  });
+
+  if (!order) {
+    return sendResponse(res, 404, "Order not found");
+  }
+
+  const json = order.toJSON();
+  const vendorItems = Array.isArray(json.items)
+    ? json.items.filter((item) => Number(item.product?.createdBy) === Number(req.user._id))
+    : [];
+
+  if (!vendorItems.length) {
+    return sendResponse(res, 403, "This order does not belong to your store");
+  }
+
+  if (!order.deliveryIssueReason) {
+    return sendResponse(res, 400, "This order does not have a reported delivery issue");
+  }
+
+  const nextStatus = String(req.body?.status || "").trim().toLowerCase();
+  const resolutionNote = normalizeNullableText(req.body?.resolutionNote || "");
+
+  if (!DELIVERY_ISSUE_STATUSES.has(nextStatus)) {
+    return sendResponse(res, 400, "Choose a valid issue status");
+  }
+
+  order.deliveryIssueStatus = nextStatus;
+  order.deliveryIssueResolutionNote = resolutionNote;
+  order.deliveryIssueResolvedAt = nextStatus === "resolved" ? new Date() : null;
+  await order.save();
+
+  await AuditLog.create({
+    orderId: order.id,
+    userId: req.user._id,
+    riderId: order.riderId || null,
+    userName: req.user?.name || null,
+    riderName: order.rider?.name || null,
+    type: "delivery",
+    action: "vendor_delivery_issue_status_updated",
+    message: `Vendor updated delivery issue for order ${order.id} to ${nextStatus}`,
+    meta: {
+      status: nextStatus,
+      resolutionNote,
+      vendorId: req.user._id,
+    },
+  });
+
+  await createNotificationRecord({
+    orderId: order.id,
+    type: "customer_delivery_issue_update",
+    audience: "customer",
+    message:
+      nextStatus === "resolved"
+        ? `Your delivery issue for order #${order.id} has been resolved by the store team.`
+        : `Your delivery issue for order #${order.id} is now ${nextStatus}.`,
+    phone: order.deliveryContactPhone || order.user?.phone || null,
+    customerName: order.user?.name || null,
+    riderName: order.rider?.name || null,
+    status: "logged",
+    userId: order.userId,
+  });
+
+  const refreshed = await Order.findByPk(order.id, { include: vendorOrderIncludes });
+  const refreshedJson = refreshed.toJSON();
+  const refreshedItems = Array.isArray(refreshedJson.items)
+    ? refreshedJson.items.filter((item) => Number(item.product?.createdBy) === Number(req.user._id))
+    : [];
+
+  return sendResponse(res, 200, "Delivery issue updated", summarizeVendorOrder({ ...refreshedJson, items: refreshedItems }));
 });

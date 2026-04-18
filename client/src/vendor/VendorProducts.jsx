@@ -15,6 +15,7 @@ import axios from "../utils/axios";
 import { extractList } from "../utils/apiShape";
 import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../utils/image";
 import { useToast } from "../hooks/useToast";
+import { getProductReviewStatusTone } from "../utils/statusStyles";
 
 const LOW_STOCK_LIMIT = 5;
 const defaultForm = {
@@ -23,12 +24,6 @@ const defaultForm = {
   price: "",
   stock: "",
   image: "",
-};
-
-const statusBadgeClass = (status) => {
-  if (status === "approved") return "bg-emerald-100 text-emerald-700";
-  if (status === "rejected") return "bg-rose-100 text-rose-700";
-  return "bg-amber-100 text-amber-700";
 };
 
 const formatReviewMeta = (product) => {
@@ -62,6 +57,11 @@ export default function VendorProducts() {
   const [form, setForm] = useState(defaultForm);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(PLACEHOLDER_IMAGE);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const metrics = useMemo(
     () => ({
@@ -78,6 +78,69 @@ export default function VendorProducts() {
     () => products.filter((product) => product.status === "rejected"),
     [products]
   );
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return products.filter((product) => {
+      if (normalizedQuery) {
+        const searchableText = [
+          product.name,
+          product.description,
+          product.sku,
+          product.reviewNotes,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(normalizedQuery)) {
+          return false;
+        }
+      }
+
+      if (statusFilter !== "all" && product.status !== statusFilter) {
+        return false;
+      }
+
+      if (stockFilter === "low" && Number(product.stock || 0) > LOW_STOCK_LIMIT) {
+        return false;
+      }
+
+      if (stockFilter === "out" && Number(product.stock || 0) > 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [products, searchQuery, statusFilter, stockFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize, searchQuery, statusFilter, stockFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredProducts.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredProducts, pageSize]);
+
+  const paginationLabel = useMemo(() => {
+    if (!filteredProducts.length) {
+      return "Showing 0 results";
+    }
+
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, filteredProducts.length);
+    return `Showing ${start}-${end} of ${filteredProducts.length}`;
+  }, [currentPage, filteredProducts.length, pageSize]);
 
   useEffect(() => {
     return () => {
@@ -203,8 +266,8 @@ export default function VendorProducts() {
   return (
     <div className="space-y-5 md:space-y-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="rounded-[28px] border border-amber-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_48%,#fffbeb_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-500">Store Catalog</p>
+        <div className="rounded-[28px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_48%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Store Catalog</p>
           <h1 className="mt-1 text-xl font-black text-slate-900 md:text-2xl">Your Products</h1>
           <p className="text-slate-500">Create, update, and keep track of what is live, waiting for review, or needs changes.</p>
         </div>
@@ -217,14 +280,14 @@ export default function VendorProducts() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
           { label: "Total Products", value: metrics.total, tone: "text-slate-900", icon: FiPackage, accent: "bg-slate-100 text-slate-700" },
-          { label: "Approved", value: metrics.approved, tone: "text-emerald-700", icon: FiCheckCircle, accent: "bg-emerald-100 text-emerald-600" },
+          { label: "Approved", value: metrics.approved, tone: "text-[#102A43]", icon: FiCheckCircle, accent: "bg-slate-100 text-[#102A43]" },
           { label: "Pending Review", value: metrics.pending, tone: "text-amber-700", icon: FiMessageSquare, accent: "bg-amber-100 text-amber-600" },
-          { label: "Needs Changes", value: metrics.rejected, tone: "text-rose-700", icon: FiXCircle, accent: "bg-rose-100 text-rose-600" },
+          { label: "Needs Changes", value: metrics.rejected, tone: "text-red-700", icon: FiXCircle, accent: "bg-red-100 text-red-600" },
           { label: "Low Stock", value: metrics.lowStock, tone: "text-orange-700", icon: FiAlertTriangle, accent: "bg-orange-100 text-orange-600" },
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.label} className="rounded-[24px] border border-white/80 bg-white/92 p-5 shadow-[0_18px_38px_rgba(15,23,42,0.06)]">
+            <article key={item.label} className="surface-panel p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
@@ -240,21 +303,21 @@ export default function VendorProducts() {
       </section>
 
       {rejectedProducts.length ? (
-        <section className="rounded-[28px] border border-rose-100 bg-[linear-gradient(135deg,#fff1f2_0%,#ffffff_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:p-6">
+        <section className="rounded-[28px] border border-red-100 bg-[linear-gradient(135deg,#fff1f2_0%,#ffffff_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-400">Review Feedback</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-500">Review Feedback</p>
               <h2 className="mt-1 text-lg font-black text-slate-900">Products that need updates</h2>
               <p className="text-sm text-slate-500">Use the admin notes below, update the listing, and submit it again for review.</p>
             </div>
-            <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
               {rejectedProducts.length} product{rejectedProducts.length === 1 ? "" : "s"} need changes
             </span>
           </div>
 
           <div className="mt-5 grid gap-4 xl:grid-cols-3">
             {rejectedProducts.slice(0, 6).map((product) => (
-              <article key={product._id} className="rounded-[24px] border border-white/80 bg-white/92 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.06)]">
+              <article key={product._id} className="surface-panel p-4 shadow-[0_16px_34px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center gap-3">
                   <img
                     src={resolveImageUrl(product.images || product.imageUrl || product.image, PLACEHOLDER_IMAGE)}
@@ -269,13 +332,13 @@ export default function VendorProducts() {
                     <p className="text-xs text-slate-500">{formatReviewMeta(product) || "Awaiting your resubmission"}</p>
                   </div>
                 </div>
-                <p className="mt-4 rounded-[20px] border border-rose-100 bg-rose-50/70 p-4 text-sm text-slate-600">
+                <p className="mt-4 rounded-[20px] border border-red-100 bg-red-50/70 p-4 text-sm text-slate-600">
                   {getFeedbackMessage(product)}
                 </p>
                 <button
                   type="button"
                   onClick={() => startEditing(product)}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white px-4 py-3 font-semibold text-rose-700 transition hover:bg-rose-50"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-4 py-3 font-semibold text-red-700 transition hover:bg-red-50"
                 >
                   <FiEdit /> Update Product
                 </button>
@@ -286,7 +349,48 @@ export default function VendorProducts() {
       ) : null}
 
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="overflow-hidden rounded-[28px] border border-white/80 bg-white/92 shadow-[0_20px_40px_rgba(15,23,42,0.07)]">
+        <div className="surface-panel-wrap">
+          <div className="grid gap-3 border-b border-slate-200/70 bg-white/80 p-4 md:grid-cols-3">
+            <label className="block md:col-span-3">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Search products</span>
+              <input
+                className="input"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by product name, SKU, description, or feedback"
+              />
+              <p className="mt-2 text-xs text-slate-500">{paginationLabel} from {products.length} total products</p>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Status</span>
+              <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">All statuses</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending review</option>
+                <option value="rejected">Needs changes</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Stock</span>
+              <select className="input" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
+                <option value="all">All stock levels</option>
+                <option value="low">Low stock</option>
+                <option value="out">Out of stock</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rows per page</span>
+              <select className="input" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value) || 10)}>
+                <option value={10}>10 rows</option>
+                <option value={20}>20 rows</option>
+                <option value={50}>50 rows</option>
+              </select>
+            </label>
+          </div>
+
           {error ? (
             <div className="p-4">
               <PageState tone="error" title="Products unavailable" description={error} />
@@ -307,7 +411,7 @@ export default function VendorProducts() {
               </thead>
               <tbody>
                 {!loading &&
-                  products.map((product) => {
+                  paginatedProducts.map((product) => {
                     const lowStock = Number(product.stock || 0) <= LOW_STOCK_LIMIT;
 
                     return (
@@ -332,11 +436,11 @@ export default function VendorProducts() {
                         <td className="p-3 text-slate-700">
                           <div className="flex items-center gap-2">
                             {product.stock}
-                            {lowStock ? <FiAlertTriangle className="text-rose-500" /> : null}
+                            {lowStock ? <FiAlertTriangle className="text-red-500" /> : null}
                           </div>
                         </td>
                         <td className="p-3">
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(product.status)}`}>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getProductReviewStatusTone(product.status)}`}>
                             {product.status}
                           </span>
                           {formatReviewMeta(product) ? (
@@ -351,7 +455,7 @@ export default function VendorProducts() {
                             <button
                               type="button"
                               onClick={() => startEditing(product)}
-                              className="rounded-xl border border-sky-200 bg-sky-50 p-2 text-sky-600 transition hover:bg-sky-100"
+                              className="rounded-xl border border-[#102A43]/10 bg-slate-100 p-2 text-[#102A43] transition hover:bg-slate-200"
                               title="Edit product"
                             >
                               <FiEdit />
@@ -359,7 +463,7 @@ export default function VendorProducts() {
                             <button
                               type="button"
                               onClick={() => handleDelete(product._id)}
-                              className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100"
+                              className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100"
                               title="Delete product"
                             >
                               <FiTrash2 />
@@ -373,23 +477,49 @@ export default function VendorProducts() {
             </table>
 
             {loading ? <div className="p-6 text-center text-slate-500">Loading products...</div> : null}
-            {!loading && !products.length ? (
+            {!loading && !filteredProducts.length ? (
               <div className="p-6">
                 <PageState
                   tone="info"
-                  title="No products yet"
-                  description="Add your first product and it will be submitted for admin review."
+                  title="No products match these filters"
+                  description="Try a broader search or adjust the status and stock filters."
                 />
               </div>
             ) : null}
           </div>
+          {filteredProducts.length > 0 ? (
+            <div className="flex flex-col gap-3 border-t border-slate-200/70 px-4 py-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+              <p>{paginationLabel}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Previous
+                </button>
+                <span className="rounded-xl bg-slate-100 px-3 py-2 font-semibold text-slate-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[28px] border border-white/80 bg-white/92 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)] md:p-6"
+          className="surface-panel-lg p-5 md:p-6"
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-500">Product Editor</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#102A43]">Product Editor</p>
           <h2 className="mt-1 text-xl font-black text-slate-900">{editingProduct ? "Update Product" : "Add Product"}</h2>
           <p className="mt-2 text-sm text-slate-500">
             {editingProduct
@@ -398,8 +528,8 @@ export default function VendorProducts() {
           </p>
 
           {editingProduct?.status === "rejected" ? (
-            <div className="mt-4 rounded-[24px] border border-rose-100 bg-rose-50/70 p-4 text-sm text-slate-600">
-              <p className="font-semibold text-rose-700">Latest admin feedback</p>
+            <div className="mt-4 rounded-[24px] border border-red-100 bg-red-50/70 p-4 text-sm text-slate-600">
+              <p className="font-semibold text-red-700">Latest admin feedback</p>
               <p className="mt-2">{getFeedbackMessage(editingProduct)}</p>
             </div>
           ) : null}
@@ -449,8 +579,8 @@ export default function VendorProducts() {
               onChange={(event) => setForm((prev) => ({ ...prev, image: event.target.value }))}
             />
 
-            <div className="rounded-[24px] border border-amber-100 bg-amber-50/50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-500">Preview</p>
+            <div className="rounded-[24px] border border-orange-200 bg-orange-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-700">Preview</p>
               <div className="mt-3 overflow-hidden rounded-[22px] border border-white/80 bg-white p-3 shadow-sm">
                 <img
                   src={imagePreview || PLACEHOLDER_IMAGE}
@@ -461,7 +591,7 @@ export default function VendorProducts() {
                   }}
                 />
               </div>
-              <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-amber-50">
+              <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-orange-50">
                 <FiImage /> Upload image
                 <input
                   type="file"

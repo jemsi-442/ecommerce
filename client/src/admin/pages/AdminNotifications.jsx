@@ -66,7 +66,10 @@ export default function AdminNotifications() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <h1 className="text-xl md:text-2xl font-bold text-gray-800">Notifications</h1>
+      <div className="rounded-[28px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_44%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Operations Signals</p>
+        <h1 className="mt-1 text-xl font-black text-slate-900 md:text-2xl">Notifications</h1>
+      </div>
       {error ? (
         <PageState tone="error" title="Notifications unavailable" description={error} />
       ) : null}
@@ -80,7 +83,7 @@ export default function AdminNotifications() {
           onClick={() => notificationPreferences.setSoundEnabled(!notificationPreferences.soundEnabled)}
           className={`rounded-full border px-3 py-1 ${
             notificationPreferences.soundEnabled
-              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+              ? "border-orange-300 bg-orange-50 text-orange-700"
               : "border-slate-200 bg-white text-slate-500"
           }`}
         >
@@ -93,7 +96,7 @@ export default function AdminNotifications() {
           }
           className={`rounded-full border px-3 py-1 ${
             notificationPreferences.vibrationEnabled
-              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+              ? "border-orange-300 bg-orange-50 text-orange-700"
               : "border-slate-200 bg-white text-slate-500"
           }`}
         >
@@ -101,9 +104,9 @@ export default function AdminNotifications() {
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow rounded-xl">
+      <div className="surface-panel-scroll">
         <table className="w-full min-w-[760px] text-sm">
-          <thead className="bg-gray-100 text-gray-600">
+          <thead className="bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] text-slate-600">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer</th>
@@ -117,16 +120,16 @@ export default function AdminNotifications() {
 
           <tbody>
             {notifications.map((n) => (
-              <tr key={n._id} className="border-b hover:bg-gray-50">
+              <tr key={n._id} className="border-b border-slate-100 hover:bg-orange-50/30">
                 <td className="p-3">{String(n.orderId || "").slice(-5)}</td>
                 <td className="p-3">{n.customerName || n.userName || "N/A"}</td>
                 <td className="p-3 text-xs font-semibold text-slate-700">
                   {n.notificationType || n.type}
                 </td>
-                <td className="p-3 text-sm text-gray-700">{n.message}</td>
+                <td className="p-3 text-sm text-slate-700">{n.message}</td>
                 <td
                   className={`p-3 text-center font-semibold ${
-                    n.status === "sent" ? "text-green-600" : "text-gray-500"
+                    n.status === "sent" ? "text-emerald-600" : "text-slate-500"
                   }`}
                 >
                   {n.status || "logged"}
@@ -138,7 +141,7 @@ export default function AdminNotifications() {
                       <button
                         onClick={() => sendNotification(n.orderId)}
                         disabled={sendingId === n.orderId}
-                        className="flex items-center space-x-1 rounded bg-blue-500 px-3 py-1 text-xs text-white hover:bg-blue-600"
+                        className="flex items-center space-x-1 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-3 py-1 text-xs text-white hover:brightness-110"
                       >
                         <FaPaperPlane />
                         <span>Send</span>
@@ -151,7 +154,7 @@ export default function AdminNotifications() {
                       <button
                         onClick={() => markAsRead(n._id)}
                         disabled={markingId === n._id}
-                        className="rounded border border-emerald-300 bg-white px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                        className="rounded-full border border-orange-300 bg-white px-3 py-1 text-xs font-medium text-orange-700 hover:bg-orange-50"
                       >
                         Mark read
                       </button>
@@ -162,7 +165,7 @@ export default function AdminNotifications() {
             ))}
             {notifications.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-3 text-center text-gray-500">
+                <td colSpan={7} className="p-3 text-center text-slate-500">
                   No notifications yet.
                 </td>
               </tr>
@@ -171,9 +174,9 @@ export default function AdminNotifications() {
         </table>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow rounded-xl">
+      <div className="surface-panel-scroll">
         <table className="w-full min-w-[860px] text-sm">
-          <thead className="bg-gray-100 text-gray-600">
+          <thead className="bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] text-slate-600">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Action</th>
@@ -186,7 +189,7 @@ export default function AdminNotifications() {
 
           <tbody>
             {paymentLogs.map((log) => (
-              <tr key={log.id} className="border-b hover:bg-gray-50">
+              <tr key={log.id} className="border-b border-slate-100 hover:bg-orange-50/30">
                 <td className="p-3">{log.orderId ? `#${log.orderId}` : "N/A"}</td>
                 <td className="p-3 text-xs font-semibold text-slate-700">{log.action}</td>
                 <td className="p-3 text-xs text-slate-500">
@@ -195,7 +198,7 @@ export default function AdminNotifications() {
                 <td className="p-3 text-xs text-slate-500">
                   {log.meta?.paymentStatus || log.meta?.eventType || "logged"}
                 </td>
-                <td className="p-3 text-sm text-gray-700">{log.message}</td>
+                <td className="p-3 text-sm text-slate-700">{log.message}</td>
                 <td className="p-3 text-xs text-slate-500">
                   {log.createdAt ? new Date(log.createdAt).toLocaleString() : "N/A"}
                 </td>
@@ -203,7 +206,7 @@ export default function AdminNotifications() {
             ))}
             {paymentLogs.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-3 text-center text-gray-500">
+                <td colSpan={6} className="p-3 text-center text-slate-500">
                   No payment webhook logs yet.
                 </td>
               </tr>

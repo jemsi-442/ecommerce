@@ -17,7 +17,7 @@ export default function RecommendationShelf({
   return (
     <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.05)] md:p-6">
       <div className="flex items-center gap-3">
-        <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+        <div className="rounded-2xl bg-slate-100 p-3 text-[#102A43]">
           <FiPackage size={18} />
         </div>
         <div>
@@ -43,7 +43,7 @@ export default function RecommendationShelf({
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <Link to={`/product/${product._id}`} className="line-clamp-1 text-base font-black text-slate-900 hover:text-emerald-700">
+                      <Link to={`/product/${product._id}`} className="line-clamp-1 text-base font-black text-slate-900 hover:text-[#102A43]">
                         {product.name}
                       </Link>
                       <p className="mt-1 text-sm text-slate-500">{product.vendor?.storeName || product.vendor?.name || "Marketplace seller"}</p>
@@ -55,20 +55,20 @@ export default function RecommendationShelf({
                         />
                       </div>
                     </div>
-                    <span className="text-sm font-black text-emerald-700">TZS {Number(product.price || 0).toLocaleString()}</span>
+                    <span className="text-sm font-black text-[#102A43]">TZS {Number(product.price || 0).toLocaleString()}</span>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                    <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-200 text-slate-500"}`}>
+                    <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-slate-100 text-[#102A43]" : "bg-slate-200 text-slate-500"}`}>
                       {Number(product.countInStock || 0) > 0 ? `${Number(product.countInStock || 0)} ready now` : "Currently unavailable"}
                     </span>
                     {cartQty > 0 ? (
-                      <span className="rounded-full bg-sky-50 px-3 py-1 font-semibold text-sky-700">
+                      <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">
                         In cart x{cartQty}
                       </span>
                     ) : null}
                     {saved ? (
-                      <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">
+                      <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-700">
                         Saved by you
                       </span>
                     ) : null}
@@ -94,7 +94,7 @@ export default function RecommendationShelf({
                       onClick={() => onToggleSaved?.(product)}
                       className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                         saved
-                          ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                          ? "border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
                           : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                       }`}
                     >
@@ -104,7 +104,7 @@ export default function RecommendationShelf({
                       type="button"
                       onClick={() => onAddToCart?.(product)}
                       disabled={Number(product.countInStock || 0) <= 0}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <FiShoppingBag /> {cartQty > 0 ? "Add another" : "Add to cart"}
                     </button>

@@ -58,11 +58,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(160deg,#020617_0%,#111827_45%,#3b0764_100%)] px-4 py-12">
+    <div className="min-h-screen bg-[linear-gradient(160deg,#081B2E_0%,#102A43_45%,#1C4268_100%)] px-4 py-12">
       <div className="max-w-5xl mx-auto grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/30">
-        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(244,114,182,0.35),transparent_45%),#0f172a] p-10 text-white">
+        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(242,140,40,0.28),transparent_45%),#0f172a] p-10 text-white">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">Ecommerce</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-200">Ecommerce</p>
             <h1 className="mt-4 text-4xl font-black leading-tight">Secure Access To Premium Shop</h1>
             <p className="mt-4 text-slate-300">Log in to access the product catalog, cart, checkout, and order tracking.</p>
           </div>
@@ -132,14 +132,14 @@ export default function Login() {
           </form>
 
           <p className="mt-4 text-right text-sm">
-            <Link to="/forgot-password" className="font-semibold text-rose-600 hover:text-rose-700">
+            <Link to="/forgot-password" className="font-semibold text-[#102A43] hover:text-[#081B2E]">
               Forgot password?
             </Link>
           </p>
 
           <p className="text-center mt-5 text-sm text-slate-600">
             Don't have an account?{" "}
-            <Link to="/register" className="font-semibold text-rose-600 hover:text-rose-700">
+            <Link to="/register" className="font-semibold text-[#102A43] hover:text-[#081B2E]">
               Register
             </Link>
           </p>

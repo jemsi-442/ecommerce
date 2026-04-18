@@ -11,6 +11,8 @@ import ProductReview from "./ProductReview.js";
 
 User.hasOne(Rider, { foreignKey: "userId", as: "riderProfile" });
 Rider.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasMany(Rider, { foreignKey: "vendorId", as: "managedRiders" });
+Rider.belongsTo(User, { foreignKey: "vendorId", as: "vendor" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "orders" });
 Order.belongsTo(User, { foreignKey: "userId", as: "user" });

@@ -14,6 +14,12 @@ const Rider = sequelize.define(
       allowNull: true,
       field: "user_id",
     },
+    vendorId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      field: "vendor_id",
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

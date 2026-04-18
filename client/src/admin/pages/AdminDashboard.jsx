@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import axios from "../../utils/axios";
 import {
   FaBell,
@@ -54,11 +55,12 @@ export default function AdminDashboard() {
   const orderValueInsights = stats.salesInsights?.orderValueInsights || {};
   const paymentInsights = stats.salesInsights?.paymentInsights || {};
   const operationsInsights = stats.salesInsights?.operationsInsights || {};
+  const leadingStage = [...pieData].sort((a, b) => b.value - a.value)[0] || null;
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div className="overflow-hidden rounded-[28px] border border-emerald-100 bg-[linear-gradient(135deg,#f0fdf4_0%,#ffffff_42%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-600">Marketplace Snapshot</p>
+      <div className="overflow-hidden rounded-[28px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_42%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Marketplace Snapshot</p>
         <h1 className="mt-1 text-xl font-black text-slate-900 md:text-2xl">Commerce Pulse</h1>
         <p className="mt-1 text-sm text-slate-500">
           Sales, shoppers, sellers, deliveries, and store health in one clear marketplace view.
@@ -70,25 +72,25 @@ export default function AdminDashboard() {
           label="Sales This Month"
           value={`Tsh ${(stats.kpis?.monthlyRevenue || 0).toLocaleString()}`}
           icon={FaMoneyBillWave}
-          tone="emerald"
+          tone="navy"
         />
         <KPI
           label="Orders So Far"
           value={stats.kpis?.totalOrders || 0}
           icon={FaShoppingBag}
-          tone="sky"
+          tone="slate"
         />
         <KPI
           label="Orders to Prepare"
           value={stats.kpis?.pendingOrders || 0}
           icon={FaTruck}
-          tone="amber"
+          tone="orange"
         />
         <KPI
           label="People on the Platform"
           value={stats.kpis?.totalUsers || 0}
           icon={FaUsers}
-          tone="rose"
+          tone="slate"
         />
       </div>
 
@@ -96,7 +98,36 @@ export default function AdminDashboard() {
         <DashboardCharts revenueByDay={stats.revenueByDay || []} pieData={pieData} />
       </Suspense>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="grid gap-4 xl:grid-cols-3">
+        <AnalyticsNote
+          label="Sales note"
+          title={
+            Number(weeklyMomentum.growthRate || 0) >= 0
+              ? "Sales are stronger than last week"
+              : "Sales are softer than last week"
+          }
+          detail={`${weeklyMomentum.currentWeekOrders || 0} paid orders were captured this week, with sales moving ${Number(weeklyMomentum.growthRate || 0).toLocaleString()}% versus last week.`}
+          tone={Number(weeklyMomentum.growthRate || 0) >= 0 ? "orange" : "alert"}
+        />
+        <AnalyticsNote
+          label="Flow note"
+          title={leadingStage ? `${leadingStage.name} is carrying the heaviest order load` : "Order flow is still building"}
+          detail={
+            leadingStage
+              ? `${leadingStage.value} orders are sitting in that stage right now, so it deserves the closest day-to-day attention.`
+              : "As more orders come in, this note will show which stage is carrying the biggest load."
+          }
+          tone="navy"
+        />
+        <AnalyticsNote
+          label="Ops note"
+          title={`${stats.kpis?.pendingOrders || 0} orders still need preparation`}
+          detail={`Average delivery time is ${operationsInsights.averageDeliveryHours || "Live"} hours, while payment completion is running at ${paymentInsights.paymentCompletionRate || 0}%.`}
+          tone="slate"
+        />
+      </section>
+
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">What shoppers are buying</p>
@@ -110,25 +141,25 @@ export default function AdminDashboard() {
             label="Shopper Conversion"
             value={`${Number(stats.kpis?.conversionRate || 0).toLocaleString()}%`}
             suffix="shoppers turning into orders"
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="Live Listings"
             value={stats.kpis?.totalProducts || 0}
             suffix="products ready to sell"
-            tone="sky"
+            tone="navy"
           />
           <HealthCard
             label="Top Item by Units"
             value={(stats.topProducts?.[0]?.soldQty || 0).toLocaleString()}
             suffix={stats.topProducts?.[0]?.name || "No sales yet"}
-            tone="amber"
+            tone="orange"
           />
           <HealthCard
             label="Top Item by Sales"
             value={`Tsh ${Number(stats.topProducts?.[0]?.revenue || 0).toLocaleString()}`}
             suffix="best revenue maker"
-            tone="violet"
+            tone="slate"
           />
         </div>
 
@@ -139,26 +170,26 @@ export default function AdminDashboard() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white bg-white px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">This Week</p>
-                <p className="mt-2 text-2xl font-black text-emerald-700">Tsh {Number(weeklyMomentum.currentWeekRevenue || 0).toLocaleString()}</p>
+                <p className="mt-2 text-2xl font-black text-[#102A43]">Tsh {Number(weeklyMomentum.currentWeekRevenue || 0).toLocaleString()}</p>
                 <p className="mt-1 text-xs text-slate-500">{weeklyMomentum.currentWeekOrders || 0} paid orders</p>
               </div>
               <div className="rounded-2xl border border-white bg-white px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Last Week</p>
-                <p className="mt-2 text-2xl font-black text-sky-700">Tsh {Number(weeklyMomentum.previousWeekRevenue || 0).toLocaleString()}</p>
+                <p className="mt-2 text-2xl font-black text-orange-600">Tsh {Number(weeklyMomentum.previousWeekRevenue || 0).toLocaleString()}</p>
                 <p className="mt-1 text-xs text-slate-500">{weeklyMomentum.previousWeekOrders || 0} paid orders</p>
               </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Sales Growth</p>
-                <p className="mt-2 text-2xl font-black text-emerald-800">{Number(weeklyMomentum.growthRate || 0).toLocaleString()}%</p>
-                <p className="mt-1 text-xs text-emerald-700/80">Compared with the previous 7 days.</p>
+              <div className="rounded-2xl border border-[#102A43]/12 bg-slate-100/80 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#102A43]">Sales Growth</p>
+                <p className="mt-2 text-2xl font-black text-[#102A43]">{Number(weeklyMomentum.growthRate || 0).toLocaleString()}%</p>
+                <p className="mt-1 text-xs text-[#102A43]/80">Compared with the previous 7 days.</p>
               </div>
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Daily Sales Pace</p>
-                <p className="mt-2 text-2xl font-black text-violet-800">Tsh {Number(weeklyMomentum.averageDailyRevenue || 0).toLocaleString()}</p>
-                <p className="mt-1 text-xs text-violet-700/80">Average paid sales generated each day this week.</p>
+              <div className="rounded-2xl border border-orange-200 bg-orange-50/70 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Daily Sales Pace</p>
+                <p className="mt-2 text-2xl font-black text-orange-700">Tsh {Number(weeklyMomentum.averageDailyRevenue || 0).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-orange-700/80">Average paid sales generated each day this week.</p>
               </div>
             </div>
           </article>
@@ -200,7 +231,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-500">{product.vendorName}{product.storeSlug ? ` • Store: ${product.storeSlug}` : ""}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-rose-700">{Number(product.stock || 0).toLocaleString()} in stock</p>
+                        <p className="text-sm font-black text-orange-700">{Number(product.stock || 0).toLocaleString()} in stock</p>
                         <p className="text-xs text-slate-500">{Number(product.soldQty || 0).toLocaleString()} sold</p>
                       </div>
                     </div>
@@ -251,7 +282,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-slate-500">{Number(product.soldQty || 0).toLocaleString()} units sold</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-emerald-700">Tsh {Number(product.revenue || 0).toLocaleString()}</p>
+                      <p className="text-sm font-black text-[#102A43]">Tsh {Number(product.revenue || 0).toLocaleString()}</p>
                       <p className="text-xs text-slate-500">sales value</p>
                     </div>
                   </div>
@@ -271,19 +302,19 @@ export default function AdminDashboard() {
                   label: "Shopper to order flow",
                   value: `${Number(stats.kpis?.conversionRate || 0).toLocaleString()}%`,
                   detail: "Shows how strongly browsing shoppers are turning into buyers.",
-                  tone: "text-emerald-700",
+                  tone: "text-[#102A43]",
                 },
                 {
                   label: "Paid sales so far",
                   value: `Tsh ${Number(stats.kpis?.totalRevenue || 0).toLocaleString()}`,
                   detail: "Confirmed paid sales across the marketplace so far.",
-                  tone: "text-sky-700",
+                  tone: "text-[#102A43]",
                 },
                 {
                   label: "Live products",
                   value: Number(stats.kpis?.totalProducts || 0).toLocaleString(),
                   detail: "Useful for tracking assortment growth and shopper choice.",
-                  tone: "text-violet-700",
+                  tone: "text-orange-700",
                 },
               ].map((item) => (
                 <div key={item.label} className="rounded-2xl border border-white bg-white px-4 py-3">
@@ -297,7 +328,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Returning Shoppers</p>
@@ -311,13 +342,13 @@ export default function AdminDashboard() {
             label="Active Buyers"
             value={customerInsights.totalBuyingCustomers || 0}
             suffix="shoppers with at least one order"
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="Repeat Shoppers"
             value={customerInsights.repeatBuyers || 0}
             suffix="customers with 2+ orders"
-            tone="sky"
+            tone="slate"
           />
           <HealthCard
             label="Repeat Share"
@@ -329,13 +360,13 @@ export default function AdminDashboard() {
             label="New Shoppers"
             value={customerInsights.newCustomersThisMonth || 0}
             suffix="first-time buyers this month"
-            tone="violet"
+            tone="orange"
           />
           <HealthCard
             label="Returning Shoppers"
             value={customerInsights.returningCustomersThisMonth || 0}
             suffix="existing buyers active this month"
-            tone="rose"
+            tone="navy"
           />
         </div>
 
@@ -353,7 +384,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-500">{customer.email || "No email available"}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-emerald-700">{customer.totalOrders || 0} orders</p>
+                        <p className="text-sm font-black text-[#102A43]">{customer.totalOrders || 0} orders</p>
                         <p className="text-xs text-slate-500">Tsh {Number(customer.totalPaidRevenue || 0).toLocaleString()} lifetime paid</p>
                       </div>
                     </div>
@@ -371,7 +402,7 @@ export default function AdminDashboard() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white bg-white px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">New Shoppers</p>
-                <p className="mt-2 text-2xl font-black text-violet-700">Tsh {Number(customerInsights.newCustomerRevenue || 0).toLocaleString()}</p>
+                <p className="mt-2 text-2xl font-black text-orange-700">Tsh {Number(customerInsights.newCustomerRevenue || 0).toLocaleString()}</p>
                 <p className="mt-1 text-xs text-slate-500">Sales from first-time shoppers this month.</p>
               </div>
               <div className="rounded-2xl border border-white bg-white px-4 py-3">
@@ -387,19 +418,19 @@ export default function AdminDashboard() {
                   label: "Loyalty strength",
                   value: `${Number(customerInsights.repeatBuyerRate || 0).toLocaleString()}%`,
                   detail: "How much of your buying base has returned for another order.",
-                  tone: "text-emerald-700",
+                  tone: "text-[#102A43]",
                 },
                 {
                   label: "New shopper pull",
                   value: customerInsights.newCustomersThisMonth || 0,
                   detail: "How many first-time shoppers entered the marketplace this month.",
-                  tone: "text-violet-700",
+                  tone: "text-orange-700",
                 },
                 {
                   label: "Returning shopper activity",
                   value: customerInsights.returningCustomersThisMonth || 0,
                   detail: "How many familiar shoppers came back to buy this month.",
-                  tone: "text-sky-700",
+                  tone: "text-[#102A43]",
                 },
               ].map((item) => (
                 <div key={item.label} className="rounded-2xl border border-white bg-white px-4 py-3">
@@ -413,7 +444,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Basket Value & Payments</p>
@@ -427,13 +458,13 @@ export default function AdminDashboard() {
             label="Average Basket"
             value={`Tsh ${Number(orderValueInsights.averageOrderValue || 0).toLocaleString()}`}
             suffix="paid orders overall"
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="This Month's Basket"
             value={`Tsh ${Number(orderValueInsights.monthlyAverageOrderValue || 0).toLocaleString()}`}
             suffix="paid orders this month"
-            tone="sky"
+            tone="slate"
           />
           <HealthCard
             label="Payment Success"
@@ -445,13 +476,13 @@ export default function AdminDashboard() {
             label="Payments Completed"
             value={paymentInsights.completed || 0}
             suffix="successful payment confirmations"
-            tone="violet"
+            tone="orange"
           />
           <HealthCard
             label="Payments to Follow Up"
             value={(paymentInsights.failed || 0) + (paymentInsights.pending || 0)}
             suffix="pending or failed attempts"
-            tone="rose"
+            tone="alert"
           />
         </div>
 
@@ -469,7 +500,7 @@ export default function AdminDashboard() {
                         <p className="text-xs text-slate-500">{area.orders || 0} orders</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-emerald-700">Tsh {Number(area.paidRevenue || 0).toLocaleString()}</p>
+                        <p className="text-sm font-black text-[#102A43]">Tsh {Number(area.paidRevenue || 0).toLocaleString()}</p>
                         <p className="text-xs text-slate-500">paid revenue</p>
                       </div>
                     </div>
@@ -500,7 +531,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Failed</p>
-                          <p className="text-sm font-black text-rose-700">{day.failed || 0}</p>
+                          <p className="text-sm font-black text-red-700">{day.failed || 0}</p>
                         </div>
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Pending</p>
@@ -518,7 +549,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Delivery Performance</p>
@@ -532,13 +563,13 @@ export default function AdminDashboard() {
             label="Average Delivery Time"
             value={operationsInsights.averageDeliveryHours !== null && operationsInsights.averageDeliveryHours !== undefined ? `${Number(operationsInsights.averageDeliveryHours || 0).toLocaleString()} hrs` : "No data yet"}
             suffix="from order creation to delivery"
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="Best Delivery Time"
             value={operationsInsights.fastestDeliveryHours !== null && operationsInsights.fastestDeliveryHours !== undefined ? `${Number(operationsInsights.fastestDeliveryHours || 0).toLocaleString()} hrs` : "No data yet"}
             suffix="best recent delivery speed"
-            tone="sky"
+            tone="slate"
           />
           <HealthCard
             label="Cancellation Rate"
@@ -550,13 +581,13 @@ export default function AdminDashboard() {
             label="Refund Rate"
             value={`${Number(operationsInsights.refundRate || 0).toLocaleString()}%`}
             suffix={`${operationsInsights.refundedOrders || 0} refunded orders`}
-            tone="violet"
+            tone="orange"
           />
           <HealthCard
             label="Longest Delivery Time"
             value={operationsInsights.slowestDeliveryHours !== null && operationsInsights.slowestDeliveryHours !== undefined ? `${Number(operationsInsights.slowestDeliveryHours || 0).toLocaleString()} hrs` : "No data yet"}
             suffix="longest recent delivery time"
-            tone="rose"
+            tone="alert"
           />
         </div>
 
@@ -584,7 +615,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Assigned</p>
-                          <p className="text-sm font-black text-sky-700">{rider.currentOrders || 0}</p>
+                          <p className="text-sm font-black text-[#102A43]">{rider.currentOrders || 0}</p>
                         </div>
                       </div>
                     </div>
@@ -615,7 +646,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Refunded</p>
-                          <p className="text-sm font-black text-rose-700">{day.refunded || 0}</p>
+                          <p className="text-sm font-black text-red-700">{day.refunded || 0}</p>
                         </div>
                       </div>
                     </div>
@@ -629,7 +660,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Seller Growth</p>
@@ -643,25 +674,25 @@ export default function AdminDashboard() {
             label="Growing Stores"
             value={(vendorGrowthLeaderboard || []).length}
             suffix="stores with recent revenue activity"
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="Restock Alerts"
             value={inventorySignals.lowStockCount || 0}
             suffix="approved products at 5 or less"
-            tone="rose"
+            tone="alert"
           />
           <HealthCard
             label="Fastest Growth"
             value={`${Number(vendorGrowthLeaderboard?.[0]?.growthRate || 0).toLocaleString()}%`}
             suffix={vendorGrowthLeaderboard?.[0]?.name || "No growth data yet"}
-            tone="sky"
+            tone="orange"
           />
           <HealthCard
             label="Leading Store Sales"
             value={`Tsh ${Number(vendorGrowthLeaderboard?.[0]?.currentRevenue || 0).toLocaleString()}`}
             suffix="top store this month"
-            tone="violet"
+            tone="navy"
           />
         </div>
 
@@ -676,7 +707,7 @@ export default function AdminDashboard() {
                 <div className="grid gap-3 text-right sm:grid-cols-3 sm:gap-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">This Month</p>
-                    <p className="text-sm font-black text-emerald-700">Tsh {Number(vendor.currentRevenue || 0).toLocaleString()}</p>
+                    <p className="text-sm font-black text-[#102A43]">Tsh {Number(vendor.currentRevenue || 0).toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Last Month</p>
@@ -684,7 +715,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Sales Growth</p>
-                    <p className="text-sm font-black text-sky-700">{Number(vendor.growthRate || 0).toLocaleString()}%</p>
+                    <p className="text-sm font-black text-orange-700">{Number(vendor.growthRate || 0).toLocaleString()}%</p>
                   </div>
                 </div>
               </div>
@@ -695,7 +726,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Seller Payouts</p>
@@ -708,12 +739,12 @@ export default function AdminDashboard() {
           <HealthCard
             label="Paid Out"
             value={`Tsh ${(stats.payouts?.totalPaid || 0).toLocaleString()}`}
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="Waiting to Pay Out"
             value={`Tsh ${(stats.payouts?.pendingAmount || 0).toLocaleString()}`}
-            tone="sky"
+            tone="navy"
           />
           <HealthCard
             label="On Hold"
@@ -724,13 +755,13 @@ export default function AdminDashboard() {
             label="Average Payout Speed"
             value={stats.payouts?.settlementPerformance?.averageDays !== null && stats.payouts?.settlementPerformance?.averageDays !== undefined ? `${stats.payouts.settlementPerformance.averageDays} days` : "No data yet"}
             suffix={`${stats.payouts?.totalRecords || 0} payout records`}
-            tone="violet"
+            tone="slate"
           />
           <HealthCard
             label="Funds Needing Attention"
             value={`${Number(stats.payouts?.exposureRate || 0).toLocaleString()}%`}
             suffix="share still waiting"
-            tone="rose"
+            tone="alert"
           />
         </div>
 
@@ -747,7 +778,7 @@ export default function AdminDashboard() {
                       <p className="text-xs text-slate-500">Store: {vendor.storeSlug} • {vendor.records} payout records</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-emerald-700">Tsh {Number(vendor.total || 0).toLocaleString()}</p>
+                      <p className="text-sm font-black text-[#102A43]">Tsh {Number(vendor.total || 0).toLocaleString()}</p>
                       <p className="text-xs text-slate-500">Paid Tsh {Number(vendor.paid || 0).toLocaleString()}</p>
                     </div>
                   </div>
@@ -763,9 +794,9 @@ export default function AdminDashboard() {
             <h3 className="mt-1 text-base font-black text-slate-900">How quickly seller payouts are completed</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
               {[
-                { label: "Fastest", value: stats.payouts?.settlementPerformance?.fastestDays !== null && stats.payouts?.settlementPerformance?.fastestDays !== undefined ? `${stats.payouts.settlementPerformance.fastestDays} days` : "No data yet", tone: "text-emerald-700" },
-                { label: "Slowest", value: stats.payouts?.settlementPerformance?.slowestDays !== null && stats.payouts?.settlementPerformance?.slowestDays !== undefined ? `${stats.payouts.settlementPerformance.slowestDays} days` : "No data yet", tone: "text-rose-700" },
-                { label: "Paid", value: stats.payouts?.settlementPerformance?.settledCount || 0, tone: "text-violet-700" },
+                { label: "Fastest", value: stats.payouts?.settlementPerformance?.fastestDays !== null && stats.payouts?.settlementPerformance?.fastestDays !== undefined ? `${stats.payouts.settlementPerformance.fastestDays} days` : "No data yet", tone: "text-[#102A43]" },
+                { label: "Slowest", value: stats.payouts?.settlementPerformance?.slowestDays !== null && stats.payouts?.settlementPerformance?.slowestDays !== undefined ? `${stats.payouts.settlementPerformance.slowestDays} days` : "No data yet", tone: "text-red-700" },
+                { label: "Paid", value: stats.payouts?.settlementPerformance?.settledCount || 0, tone: "text-orange-700" },
               ].map((item) => (
                 <div key={item.label} className="rounded-2xl border border-white bg-white px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
@@ -776,14 +807,14 @@ export default function AdminDashboard() {
           </article>
         </div>
 
-        <div className="mt-4 rounded-[24px] border border-rose-100 bg-[linear-gradient(135deg,#fff7ed_0%,#fff1f2_100%)] p-4">
+        <div className="mt-4 rounded-[24px] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#fff1f2_100%)] p-4">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-400">Needs Attention</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-700">Needs Attention</p>
               <h3 className="mt-1 text-base font-black text-slate-900">Stores waiting longest for payout action</h3>
               <p className="text-sm text-slate-500">These stores currently hold the largest payout value that still needs follow-up.</p>
             </div>
-            <p className="text-sm font-semibold text-rose-600">Attention share: {Number(stats.payouts?.exposureRate || 0).toLocaleString()}%</p>
+            <p className="text-sm font-semibold text-red-600">Attention share: {Number(stats.payouts?.exposureRate || 0).toLocaleString()}%</p>
           </div>
 
           <div className="mt-4 space-y-3">
@@ -797,7 +828,7 @@ export default function AdminDashboard() {
                   <div className="grid gap-2 text-right sm:grid-cols-3 sm:gap-4">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Pending</p>
-                      <p className="text-sm font-black text-sky-700">Tsh {Number(vendor.pending || 0).toLocaleString()}</p>
+                      <p className="text-sm font-black text-[#102A43]">Tsh {Number(vendor.pending || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">On Hold</p>
@@ -805,7 +836,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">At Risk</p>
-                      <p className="text-sm font-black text-rose-700">Tsh {Number(vendor.atRisk || 0).toLocaleString()}</p>
+                      <p className="text-sm font-black text-red-700">Tsh {Number(vendor.atRisk || 0).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -817,9 +848,9 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
+      <section className="surface-section p-5">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
+          <div className="rounded-xl bg-orange-100 p-3 text-orange-700">
             <FaBell size={18} />
           </div>
           <div>
@@ -834,18 +865,18 @@ export default function AdminDashboard() {
           <HealthCard
             label="New Team Updates"
             value={stats.notifications?.unreadAdminNotifications || 0}
-            tone="emerald"
+            tone="navy"
           />
           <HealthCard
             label="New Shopper Updates"
             value={stats.notifications?.unreadCustomerNotifications || 0}
-            tone="sky"
+            tone="slate"
           />
           <HealthCard
             label="Recent Alerts"
             value={stats.notifications?.recentOutboxEvents || 0}
             suffix="last hour"
-            tone="amber"
+            tone="orange"
           />
           <HealthCard
             label="Live Viewers"
@@ -853,7 +884,7 @@ export default function AdminDashboard() {
             suffix={`${stats.notifications?.activeAdminStreamClients || 0} admin / ${
               stats.notifications?.activeCustomerStreamClients || 0
             } customers`}
-            tone="violet"
+            tone="slate"
           />
         </div>
 
@@ -877,42 +908,60 @@ export default function AdminDashboard() {
 /* ================= COMPONENT ================= */
 
 const kpiToneClasses = {
-  emerald:
-    "border-emerald-200/80 bg-[linear-gradient(135deg,#ecfdf5_0%,#d1fae5_48%,#ffffff_100%)] text-emerald-900",
-  sky: "border-sky-200/80 bg-[linear-gradient(135deg,#f0f9ff_0%,#dbeafe_50%,#ffffff_100%)] text-sky-900",
+  navy:
+    "border-[#102A43]/15 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_40%,#ffffff_100%)] text-slate-950",
+  orange:
+    "border-orange-200/70 bg-[linear-gradient(135deg,#fff7ed_0%,#fed7aa_35%,#ffffff_100%)] text-slate-950",
+  slate: "border-slate-200/70 bg-[linear-gradient(135deg,#f8fafc_0%,#e2e8f0_46%,#ffffff_100%)] text-slate-950",
   amber:
-    "border-amber-200/80 bg-[linear-gradient(135deg,#fffbeb_0%,#fde68a_42%,#ffffff_100%)] text-amber-900",
-  rose: "border-slate-200/80 bg-[linear-gradient(135deg,#f8fafc_0%,#e2e8f0_46%,#ffffff_100%)] text-slate-900",
+    "border-orange-200/70 bg-[linear-gradient(135deg,#fff7ed_0%,#fed7aa_35%,#ffffff_100%)] text-slate-950",
 };
 
-const KPI = ({ label, value, icon: Icon, tone = "emerald" }) => (
-  <div className={`rounded-[24px] border p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] ${kpiToneClasses[tone] || kpiToneClasses.emerald}`}>
-    <div className="flex items-center justify-between">
+const KPI = ({ label, value, icon: Icon, tone = "navy" }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 18 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.45, ease: "easeOut" }}
+    whileHover={{ y: -6 }}
+    className={`group relative overflow-hidden rounded-[26px] border p-4 shadow-[0_22px_45px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(15,23,42,0.12)] ${kpiToneClasses[tone] || kpiToneClasses.navy}`}
+  >
+    <div className="absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.7),transparent_70%)] opacity-80" />
+    <div className="relative flex items-center justify-between">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-70">{label}</p>
-        <p className="mt-2 text-2xl font-black">{value}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] opacity-65">{label}</p>
+        <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
+        <p className="mt-2 text-xs font-medium opacity-60">Live marketplace signal</p>
       </div>
-      <div className="rounded-2xl bg-white/75 p-3 shadow-sm">
+      <div className="rounded-[22px] border border-white/60 bg-white/75 p-3.5 shadow-[0_12px_24px_rgba(255,255,255,0.3)] backdrop-blur">
         <Icon size={24} />
       </div>
     </div>
-  </div>
+  </motion.div>
 );
 
 const toneClasses = {
-  emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  sky: "border-sky-200 bg-sky-50 text-sky-700",
-  amber: "border-amber-200 bg-amber-50 text-amber-700",
-  violet: "border-teal-200 bg-teal-50 text-teal-700",
-  rose: "border-slate-200 bg-slate-50 text-slate-700",
+  navy: "border-[#102A43]/12 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_42%,#ffffff_100%)] text-[#102A43]",
+  orange: "border-orange-200/70 bg-[linear-gradient(135deg,#fff7ed_0%,#fed7aa_36%,#ffffff_100%)] text-orange-800",
+  slate: "border-slate-200/70 bg-[linear-gradient(135deg,#f8fafc_0%,#e2e8f0_42%,#ffffff_100%)] text-slate-800",
+  alert: "border-red-200/70 bg-[linear-gradient(135deg,#fef2f2_0%,#fee2e2_42%,#ffffff_100%)] text-red-800",
+  amber: "border-orange-200/70 bg-[linear-gradient(135deg,#fff7ed_0%,#fed7aa_36%,#ffffff_100%)] text-orange-800",
 };
 
-const HealthCard = ({ label, value, suffix = "", tone = "emerald" }) => (
-  <div className={`rounded-2xl border p-4 shadow-sm ${toneClasses[tone] || toneClasses.emerald}`}>
-    <p className="text-xs font-semibold uppercase tracking-[0.18em]">{label}</p>
-    <p className="mt-2 text-2xl font-black">{value}</p>
-    {suffix ? <p className="mt-1 text-xs opacity-80">{suffix}</p> : null}
-  </div>
+const HealthCard = ({ label, value, suffix = "", tone = "navy" }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, ease: "easeOut" }}
+    whileHover={{ y: -4 }}
+    className={`relative overflow-hidden rounded-[24px] border p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_46px_rgba(15,23,42,0.10)] ${toneClasses[tone] || toneClasses.navy}`}
+  >
+    <div className="absolute inset-x-0 top-0 h-16 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_70%)]" />
+    <div className="relative">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] opacity-70">{label}</p>
+      <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
+      {suffix ? <p className="mt-2 text-xs font-medium opacity-75">{suffix}</p> : null}
+    </div>
+  </motion.div>
 );
 
 
@@ -936,5 +985,29 @@ const formatOrderStage = (value) => {
 };
 
 const PageHint = ({ message }) => (
-  <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-500">{message}</div>
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.35, ease: "easeOut" }}
+    className="rounded-[24px] border border-dashed border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_100%)] px-5 py-6 text-sm leading-6 text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+  >
+    {message}
+  </motion.div>
 );
+
+const AnalyticsNote = ({ label, title, detail, tone = "slate" }) => {
+  const toneMap = {
+    navy: "border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_100%)]",
+    orange: "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_100%)]",
+    slate: "border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_100%)]",
+    alert: "border-red-200 bg-[linear-gradient(135deg,#fef2f2_0%,#ffffff_100%)]",
+  };
+
+  return (
+    <article className={`surface-panel p-5 ${toneMap[tone] || toneMap.slate}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
+      <h3 className="mt-2 text-base font-black text-slate-900">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{detail}</p>
+    </article>
+  );
+};

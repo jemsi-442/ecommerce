@@ -1,14 +1,52 @@
 import { Op } from "sequelize";
 import Rider from "../models/Rider.js";
 import Order from "../models/Order.js";
+import OrderItem from "../models/OrderItem.js";
+import Product from "../models/Product.js";
 
-export const assignRider = async () => {
-  const riders = await Rider.findAll({
+const getAvailableRiders = async (vendorId = null) => {
+  if (vendorId) {
+    const vendorRiders = await Rider.findAll({
+      where: {
+        vendorId,
+        available: true,
+        isActive: true,
+      },
+    });
+
+    if (vendorRiders.length) {
+      return vendorRiders;
+    }
+  }
+
+  return Rider.findAll({
     where: {
+      vendorId: null,
       available: true,
       isActive: true,
     },
   });
+};
+
+export const getOrderVendorRiderScope = async (orderId) => {
+  const items = await OrderItem.findAll({
+    where: { orderId },
+    include: [
+      {
+        model: Product,
+        as: "product",
+        attributes: ["createdBy"],
+        required: false,
+      },
+    ],
+  });
+
+  const vendorIds = [...new Set(items.map((item) => Number(item.product?.createdBy)).filter(Boolean))];
+  return vendorIds.length === 1 ? vendorIds[0] : null;
+};
+
+export const assignRider = async ({ vendorId = null } = {}) => {
+  const riders = await getAvailableRiders(vendorId);
 
   if (!riders.length) {
     console.warn("No available riders");

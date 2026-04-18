@@ -28,13 +28,13 @@ export default function AdminSidebar({
   };
 
   return (
-    <aside className={`flex min-h-screen w-72 flex-col border-r border-emerald-950/20 bg-[linear-gradient(180deg,#052e2b_0%,#0f172a_40%,#111827_100%)] text-slate-200 ${className}`}>
+    <aside className={`sticky top-0 flex h-screen w-72 shrink-0 flex-col overflow-y-auto border-r border-slate-900/10 bg-[linear-gradient(180deg,#0f172a_0%,#172554_48%,#1e293b_100%)] text-slate-200 ${className}`}>
       <div className="border-b border-white/10 px-6 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-300/80">Seller & shopper hub</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/90">Seller & shopper hub</p>
             <h1 className="mt-2 text-xl font-black text-white">
-              Ecommerce <span className="text-emerald-300">Marketplace</span>
+              Ecommerce <span className="text-orange-300">Marketplace</span>
             </h1>
             <p className="mt-1 text-xs tracking-wide text-slate-400">Commerce Hub</p>
           </div>
@@ -63,7 +63,7 @@ export default function AdminSidebar({
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
                   isActive
-                    ? "border border-emerald-300/20 bg-emerald-400/15 text-emerald-100 shadow-[0_14px_30px_rgba(16,185,129,0.12)]"
+                    ? "border border-orange-300/25 bg-orange-400/15 text-orange-100 shadow-[0_14px_30px_rgba(242,140,40,0.12)]"
                     : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`
               }

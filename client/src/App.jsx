@@ -32,11 +32,14 @@ const AdminPayouts = lazy(() => import("./admin/pages/AdminPayouts"));
 
 const RiderDashboard = lazy(() => import("./rider/RiderDashboard"));
 const RiderOrders = lazy(() => import("./rider/RiderOrders"));
+const RiderHistory = lazy(() => import("./rider/RiderHistory"));
+const RiderProfile = lazy(() => import("./rider/RiderProfile"));
 const VendorDashboard = lazy(() => import("./vendor/VendorDashboard"));
 const VendorProducts = lazy(() => import("./vendor/VendorProducts"));
 const VendorOrders = lazy(() => import("./vendor/VendorOrders"));
 const VendorProfile = lazy(() => import("./vendor/VendorProfile"));
 const VendorPayouts = lazy(() => import("./vendor/VendorPayouts"));
+const VendorRiders = lazy(() => import("./vendor/VendorRiders"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -140,6 +143,7 @@ export default function App() {
           <Route index element={<VendorDashboard />} />
           <Route path="products" element={<VendorProducts />} />
           <Route path="orders" element={<VendorOrders />} />
+          <Route path="riders" element={<VendorRiders />} />
           <Route path="profile" element={<VendorProfile />} />
           <Route path="payouts" element={<VendorPayouts />} />
         </Route>
@@ -155,10 +159,14 @@ export default function App() {
         >
           <Route index element={<RiderDashboard />} />
           <Route path="orders" element={<RiderOrders />} />
+          <Route path="history" element={<RiderHistory />} />
+          <Route path="profile" element={<RiderProfile />} />
         </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
       </Routes>
     </Suspense>
   );

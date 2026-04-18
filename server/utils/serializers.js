@@ -10,6 +10,8 @@ export const serializeUser = (row, { includePassword = false } = {}) => {
   const out = {
     ...user,
     _id: user.id,
+    phone: user.phone || null,
+    createdAt: user.createdAt || user.created_at || null,
   };
 
   if (out.role === "user") {
@@ -79,6 +81,7 @@ export const serializeOrder = (row) => {
         ...order.user,
         role: order.user.role === "user" ? "customer" : order.user.role,
         _id: order.user.id,
+        phone: order.user.phone || null,
       }
     : undefined;
 
@@ -94,6 +97,16 @@ export const serializeOrder = (row) => {
         const qty = Number(item.quantity || item.qty || 0);
         const productId = item.product?.id ?? item.productId ?? item.product;
         const productName = item.product?.name || item.name || null;
+        const vendor = item.product?.creator
+          ? {
+              _id: item.product.creator.id,
+              id: item.product.creator.id,
+              name: item.product.creator.name,
+              storeName: item.product.creator.storeName || null,
+              storeSlug: item.product.creator.storeSlug || null,
+              businessPhone: item.product.creator.businessPhone || null,
+            }
+          : null;
 
         return {
           _id: item.id,
@@ -101,6 +114,8 @@ export const serializeOrder = (row) => {
           name: productName,
           qty,
           price: Number(item.price || 0),
+          image: item.product?.image || null,
+          vendor,
         };
       })
     : [];
@@ -120,6 +135,14 @@ export const serializeOrder = (row) => {
       assignedAt: order.assignedAt,
       acceptedAt: order.acceptedAt,
       completedAt: order.completedAt,
+      proofRecipient: order.deliveryProofRecipient || order.delivery_proof_recipient || null,
+      proofNote: order.deliveryProofNote || order.delivery_proof_note || null,
+      issueReportedAt: order.deliveryIssueReportedAt || order.delivery_issue_reported_at || null,
+      issueReason: order.deliveryIssueReason || order.delivery_issue_reason || null,
+      issueStatus: order.deliveryIssueStatus || order.delivery_issue_status || null,
+      issueResolvedAt: order.deliveryIssueResolvedAt || order.delivery_issue_resolved_at || null,
+      issueResolutionNote:
+        order.deliveryIssueResolutionNote || order.delivery_issue_resolution_note || null,
     },
     payment: {
       method: order.paymentMethod || "mobile_money",

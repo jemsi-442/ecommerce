@@ -204,7 +204,7 @@ export default function Storefront() {
                   <span className="rounded-full bg-white/10 px-4 py-2">Starts from {formatCurrency(storeStats.startingPrice)}</span>
                 ) : null}
                 {isFavoriteStore(store.storeSlug) ? (
-                  <span className="rounded-full bg-rose-200/15 px-4 py-2 text-rose-100">Saved in your favorite stores</span>
+                  <span className="rounded-full bg-orange-200/20 px-4 py-2 text-orange-50">Saved in your favorite stores</span>
                 ) : null}
                 {Number(store.reviewCount || 0) > 0 ? (
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
@@ -230,7 +230,7 @@ export default function Storefront() {
                   onClick={handleToggleFavoriteStore}
                   className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
                     isFavoriteStore(store.storeSlug)
-                      ? "border border-rose-200/40 bg-rose-200/15 text-rose-50 hover:bg-rose-200/20"
+                      ? "border border-orange-200/40 bg-orange-200/15 text-orange-50 hover:bg-orange-200/20"
                       : "border border-white/20 bg-white/10 text-white hover:bg-white/15"
                   }`}
                 >
@@ -304,14 +304,14 @@ export default function Storefront() {
                     className="aspect-[4/4.8] w-full object-cover"
                   />
                   <div className="pointer-events-none absolute inset-x-4 top-4 flex flex-wrap gap-2 text-xs">
-                    <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-white/90 text-emerald-700" : "bg-slate-900/75 text-white"}`}>
+                    <span className={`rounded-full px-3 py-1 font-semibold ${Number(product.countInStock || 0) > 0 ? "bg-white/90 text-[#102A43]" : "bg-slate-900/75 text-white"}`}>
                       {Number(product.countInStock || 0) > 0 ? `${Number(product.countInStock || 0)} ready now` : "Currently unavailable"}
                     </span>
                     {cartQty > 0 ? (
-                      <span className="rounded-full bg-sky-50/95 px-3 py-1 font-semibold text-sky-700">In cart x{cartQty}</span>
+                      <span className="rounded-full bg-slate-100/95 px-3 py-1 font-semibold text-[#102A43]">In cart x{cartQty}</span>
                     ) : null}
                     {saved ? (
-                      <span className="rounded-full bg-rose-50/95 px-3 py-1 font-semibold text-rose-700">Saved by you</span>
+                      <span className="rounded-full bg-orange-50/95 px-3 py-1 font-semibold text-orange-700">Saved by you</span>
                     ) : null}
                     {badges.slice(0, 2).map((badge) => (
                       <span key={badge.label} className={`rounded-full px-3 py-1 font-semibold ${getSignalToneClasses(badge.tone)}`}>
@@ -327,7 +327,7 @@ export default function Storefront() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">From this seller</p>
                       <h3 className="mt-2 text-lg font-black text-slate-900">{product.name}</h3>
                     </div>
-                    <p className="text-lg font-black text-emerald-700">{formatCurrency(product.price)}</p>
+                    <p className="text-lg font-black text-[#102A43]">{formatCurrency(product.price)}</p>
                   </div>
 
                   {badges.length > 2 ? (
@@ -357,7 +357,7 @@ export default function Storefront() {
                       onClick={() => handleToggleSaved(product)}
                       className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                         saved
-                          ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                          ? "border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
                           : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                       }`}
                     >
@@ -367,7 +367,7 @@ export default function Storefront() {
                       type="button"
                       onClick={() => handleAddToCart(product)}
                       disabled={Number(product.countInStock || 0) <= 0}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#10b981_0%,#0f766e_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#102A43_0%,#081B2E_100%)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <FiShoppingBag /> {cartQty > 0 ? "Add another" : "Add to cart"}
                     </button>

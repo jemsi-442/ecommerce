@@ -29,11 +29,11 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(165deg,#111827_0%,#312e81_50%,#831843_100%)] px-4 py-12">
+    <div className="min-h-screen bg-[linear-gradient(165deg,#081B2E_0%,#102A43_50%,#F28C28_100%)] px-4 py-12">
       <div className="max-w-5xl mx-auto grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/15 shadow-2xl shadow-black/30">
-        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(251,113,133,0.35),transparent_42%),#0f172a] p-10 text-white">
+        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(242,140,40,0.3),transparent_42%),#0f172a] p-10 text-white">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">Password Reset</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-200">Password Reset</p>
             <h1 className="mt-4 text-4xl font-black leading-tight">Recover Access Securely</h1>
             <p className="mt-4 text-slate-300">Andika email yako, kisha mfumo utakuandalia link ya kubadilisha password.</p>
           </div>
@@ -54,10 +54,10 @@ export default function ForgotPassword() {
           )}
 
           {message && (
-            <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 space-y-2">
+            <div className="mt-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 space-y-2">
               <p>{message}</p>
               {resetUrl ? (
-                <a href={resetUrl} className="font-semibold text-emerald-800 underline break-all">
+                <a href={resetUrl} className="font-semibold text-[#102A43] underline break-all">
                   Open reset link
                 </a>
               ) : null}
@@ -87,7 +87,7 @@ export default function ForgotPassword() {
 
           <p className="text-center mt-5 text-sm text-slate-600">
             Umeikumbuka password?{" "}
-            <Link to="/login" className="font-semibold text-rose-600 hover:text-rose-700">
+            <Link to="/login" className="font-semibold text-[#102A43] hover:text-[#081B2E]">
               Rudi Login
             </Link>
           </p>

@@ -16,14 +16,9 @@ import { extractList } from "../../utils/apiShape";
 import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../../utils/image";
 import PageState from "../../components/PageState";
 import { useToast } from "../../hooks/useToast";
+import { getProductReviewStatusTone } from "../../utils/statusStyles";
 
 const LOW_STOCK_LIMIT = 5;
-
-const statusBadgeClass = (status) => {
-  if (status === "approved") return "bg-emerald-100 text-emerald-700";
-  if (status === "rejected") return "bg-rose-100 text-rose-700";
-  return "bg-amber-100 text-amber-700";
-};
 
 const formatReviewDate = (value) => {
   if (!value) return "";
@@ -57,6 +52,12 @@ export default function AdminProducts() {
   const [reviewProduct, setReviewProduct] = useState(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -92,6 +93,79 @@ export default function AdminProducts() {
     () => products.filter((product) => product.status === "pending" && product.vendor?.storeSlug),
     [products]
   );
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return products.filter((product) => {
+      if (normalizedQuery) {
+        const searchableText = [
+          product.name,
+          product.sku,
+          product.vendor?.storeName,
+          product.vendor?.name,
+          product.vendor?.storeSlug,
+          product.reviewNotes,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(normalizedQuery)) {
+          return false;
+        }
+      }
+
+      if (statusFilter !== "all" && product.status !== statusFilter) {
+        return false;
+      }
+
+      if (stockFilter === "low" && Number(product.stock || 0) > LOW_STOCK_LIMIT) {
+        return false;
+      }
+
+      if (stockFilter === "out" && Number(product.stock || 0) > 0) {
+        return false;
+      }
+
+      if (sourceFilter === "vendor" && !product.vendor?.storeSlug) {
+        return false;
+      }
+
+      if (sourceFilter === "platform" && product.vendor?.storeSlug) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [products, searchQuery, sourceFilter, statusFilter, stockFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize, searchQuery, sourceFilter, statusFilter, stockFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredProducts.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredProducts, pageSize]);
+
+  const paginationLabel = useMemo(() => {
+    if (!filteredProducts.length) {
+      return "Showing 0 results";
+    }
+
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, filteredProducts.length);
+    return `Showing ${start}-${end} of ${filteredProducts.length}`;
+  }, [currentPage, filteredProducts.length, pageSize]);
 
   const openReviewModal = (product) => {
     setReviewProduct(product);
@@ -145,8 +219,8 @@ export default function AdminProducts() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="rounded-[28px] border border-emerald-100 bg-[linear-gradient(135deg,#ecfdf5_0%,#ffffff_44%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-500">Catalog Review</p>
+        <div className="rounded-[28px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_44%,#fff7ed_100%)] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Catalog Review</p>
           <h1 className="mt-1 text-xl font-black text-slate-900 md:text-2xl">Products</h1>
           <p className="text-slate-500">Review vendor submissions, keep the live catalog clean, and send helpful feedback fast.</p>
         </div>
@@ -166,13 +240,13 @@ export default function AdminProducts() {
         {[
           { label: "Catalog Items", value: metrics.total, icon: FiPackage, tone: "text-slate-900", accent: "bg-slate-100 text-slate-700" },
           { label: "Needs Review", value: metrics.pendingReview, icon: FiShield, tone: "text-amber-700", accent: "bg-amber-100 text-amber-600" },
-          { label: "Approved", value: metrics.approved, icon: FiCheckCircle, tone: "text-emerald-700", accent: "bg-emerald-100 text-emerald-600" },
-          { label: "Needs Changes", value: metrics.rejected, icon: FiXCircle, tone: "text-rose-700", accent: "bg-rose-100 text-rose-600" },
+          { label: "Approved", value: metrics.approved, icon: FiCheckCircle, tone: "text-[#102A43]", accent: "bg-slate-100 text-[#102A43]" },
+          { label: "Needs Changes", value: metrics.rejected, icon: FiXCircle, tone: "text-red-700", accent: "bg-red-100 text-red-600" },
           { label: "Low Stock", value: metrics.lowStock, icon: FiAlertTriangle, tone: "text-orange-700", accent: "bg-orange-100 text-orange-600" },
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.label} className="rounded-[24px] border border-white/80 bg-white/92 p-5 shadow-[0_18px_38px_rgba(15,23,42,0.06)]">
+            <article key={item.label} className="surface-panel p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
@@ -202,7 +276,7 @@ export default function AdminProducts() {
 
           <div className="mt-5 grid gap-4 xl:grid-cols-3">
             {pendingVendorQueue.slice(0, 6).map((product) => (
-              <article key={product._id} className="rounded-[24px] border border-white/80 bg-white/92 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.06)]">
+              <article key={product._id} className="surface-panel p-4 shadow-[0_16px_34px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center gap-3">
                   <img
                     src={resolveImageUrl(product.images, PLACEHOLDER_IMAGE)}
@@ -235,15 +309,66 @@ export default function AdminProducts() {
         </section>
       ) : null}
 
-      <div className="overflow-hidden rounded-[28px] border border-white/80 bg-white/92 shadow-[0_20px_40px_rgba(15,23,42,0.07)]">
+      <div className="surface-panel-wrap">
         {error ? (
           <div className="p-4">
             <PageState tone="error" title="Products unavailable" description={error} />
           </div>
         ) : null}
+        <div className="grid gap-3 border-b border-slate-200/70 bg-white/80 p-4 md:grid-cols-4">
+          <label className="block md:col-span-4">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Search products</span>
+            <input
+              className="input"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search by product, SKU, store, or review notes"
+            />
+            <p className="mt-2 text-xs text-slate-500">
+              {paginationLabel} from {products.length} total products
+            </p>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Status</span>
+            <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Stock</span>
+            <select className="input" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
+              <option value="all">All stock levels</option>
+              <option value="low">Low stock</option>
+              <option value="out">Out of stock</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Source</span>
+            <select className="input" value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
+              <option value="all">All sources</option>
+              <option value="vendor">Vendor submissions</option>
+              <option value="platform">Platform catalog</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rows per page</span>
+            <select className="input" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value) || 10)}>
+              <option value={10}>10 rows</option>
+              <option value={20}>20 rows</option>
+              <option value={50}>50 rows</option>
+            </select>
+          </label>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
-            <thead className="bg-[linear-gradient(135deg,#ecfdf5_0%,#f8fafc_100%)] text-left text-slate-600">
+            <thead className="bg-[linear-gradient(135deg,#eff6ff_0%,#fff7ed_100%)] text-left text-slate-600">
               <tr>
                 <th className="p-3">Product</th>
                 <th className="p-3">Store</th>
@@ -258,12 +383,12 @@ export default function AdminProducts() {
             <tbody>
               {!loading &&
                 Array.isArray(products) &&
-                products.map((product) => {
+                paginatedProducts.map((product) => {
                   const lowStock = Number(product.stock || 0) <= LOW_STOCK_LIMIT;
                   const reviewDate = formatReviewDate(product.reviewedAt);
 
                   return (
-                    <tr key={product._id} className="border-t border-slate-100 align-top transition hover:bg-emerald-50/30">
+                    <tr key={product._id} className="border-t border-slate-100 align-top transition hover:bg-orange-50/30">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
                           <img
@@ -297,12 +422,12 @@ export default function AdminProducts() {
                       <td className="p-3 text-slate-700">
                         <div className="flex items-center gap-2">
                           {product.stock}
-                          {lowStock ? <FiAlertTriangle className="text-rose-500" /> : null}
+                          {lowStock ? <FiAlertTriangle className="text-red-500" /> : null}
                         </div>
                       </td>
 
                       <td className="p-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(product.status)}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getProductReviewStatusTone(product.status)}`}>
                           {product.status}
                         </span>
                         {reviewDate ? <p className="mt-2 text-xs text-slate-400">Reviewed {reviewDate}</p> : null}
@@ -332,7 +457,7 @@ export default function AdminProducts() {
                               setEditingProduct(product);
                               setModalOpen(true);
                             }}
-                            className="rounded-xl border border-sky-200 bg-sky-50 p-2 text-sky-600 transition hover:bg-sky-100"
+                            className="rounded-xl border border-[#102A43]/10 bg-slate-100 p-2 text-[#102A43] transition hover:bg-slate-200"
                             title="Edit product"
                           >
                             <FiEdit />
@@ -341,7 +466,7 @@ export default function AdminProducts() {
                           <button
                             type="button"
                             onClick={() => handleDelete(product._id)}
-                            className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100"
+                            className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100"
                             title="Delete product"
                           >
                             <FiTrash2 />
@@ -356,6 +481,37 @@ export default function AdminProducts() {
 
           {loading ? <div className="p-6 text-center text-slate-500">Loading products...</div> : null}
         </div>
+        {filteredProducts.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-slate-200/70 px-4 py-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+            <p>{paginationLabel}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Previous
+              </button>
+              <span className="rounded-xl bg-slate-100 px-3 py-2 font-semibold text-slate-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {!loading && filteredProducts.length === 0 ? (
+          <div className="border-t border-slate-200/70 px-4 py-8 text-center text-sm text-slate-500">
+            No products match the current filters.
+          </div>
+        ) : null}
       </div>
 
       {modalOpen ? (
@@ -430,7 +586,7 @@ function ReviewModal({ product, reviewNotes, setReviewNotes, onClose, onApprove,
                 type="button"
                 onClick={onReject}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-60"
               >
                 <FiXCircle /> {submitting ? "Saving..." : "Reject"}
               </button>
@@ -531,7 +687,7 @@ function ProductModal({ product, onClose, onSaved, toast }) {
         onSubmit={handleSubmit}
         className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-[28px] border border-white/80 bg-white/95 p-4 shadow-[0_24px_50px_rgba(15,23,42,0.18)] md:p-6"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-400">Product Editor</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Product Editor</p>
         <h2 className="text-xl font-black text-slate-900">{product ? "Edit Product" : "New Product"}</h2>
 
         <input
@@ -566,7 +722,7 @@ function ProductModal({ product, onClose, onSaved, toast }) {
           SKU: <span className="font-mono">{sku}</span>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-rose-100 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] px-4 py-3 font-medium text-rose-600">
+        <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_100%)] px-4 py-3 font-medium text-orange-700">
           <FiImage /> Upload Image
           <input
             type="file"

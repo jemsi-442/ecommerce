@@ -51,11 +51,11 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(165deg,#0f172a_0%,#1e1b4b_50%,#be185d_100%)] px-4 py-12">
+    <div className="min-h-screen bg-[linear-gradient(165deg,#081B2E_0%,#102A43_50%,#F28C28_100%)] px-4 py-12">
       <div className="max-w-5xl mx-auto grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/15 shadow-2xl shadow-black/30">
-        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_bottom_left,rgba(244,114,182,0.35),transparent_42%),#111827] p-10 text-white">
+        <aside className="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_bottom_left,rgba(242,140,40,0.3),transparent_42%),#111827] p-10 text-white">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-rose-200">Set New Password</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-200">Set New Password</p>
             <h1 className="mt-4 text-4xl font-black leading-tight">Choose A Strong New Password</h1>
             <p className="mt-4 text-slate-300">Baada ya kubadilisha password, reset link ya zamani inakuwa invalid moja kwa moja.</p>
           </div>
@@ -76,7 +76,7 @@ export default function ResetPassword() {
           )}
 
           {message && (
-            <p className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</p>
+            <p className="mt-5 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">{message}</p>
           )}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -134,7 +134,7 @@ export default function ResetPassword() {
 
           <p className="text-center mt-5 text-sm text-slate-600">
             Rudi kwenye{" "}
-            <Link to="/login" className="font-semibold text-rose-600 hover:text-rose-700">
+            <Link to="/login" className="font-semibold text-[#102A43] hover:text-[#081B2E]">
               Login
             </Link>
           </p>

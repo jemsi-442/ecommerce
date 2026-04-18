@@ -11,7 +11,7 @@ export default function CartSummary() {
   return (
     <div className="bg-white rounded-2xl shadow p-5">
       <h3 className="font-semibold text-lg mb-4 text-primary">
-        Muhtasari wa Ununuzi 
+        Order Summary
       </h3>
 
       {cart.map((item) => (

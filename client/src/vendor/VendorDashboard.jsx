@@ -89,8 +89,8 @@ export default function VendorDashboard() {
 
   return (
     <div className="space-y-5 md:space-y-6">
-      <section className="rounded-[30px] border border-white/80 bg-[linear-gradient(135deg,#ffffff_0%,#fff7ed_46%,#fffbeb_100%)] p-5 shadow-[0_24px_50px_rgba(15,23,42,0.08)] md:p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-500">Vendor Overview</p>
+      <section className="rounded-[30px] border border-[#102A43]/10 bg-[linear-gradient(135deg,#ffffff_0%,#eff6ff_46%,#fff7ed_100%)] p-5 shadow-[0_24px_50px_rgba(15,23,42,0.08)] md:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#102A43]">Vendor Overview</p>
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-black text-slate-900 md:text-3xl">
@@ -100,7 +100,7 @@ export default function VendorDashboard() {
               Track products, incoming orders, and store performance from one clean workspace.
             </p>
           </div>
-          <div className="rounded-2xl border border-amber-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm">
+          <div className="rounded-2xl border border-orange-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm">
             <p className="font-semibold text-slate-900">Store slug</p>
             <p>
               {profile?.storeSlug
@@ -126,7 +126,7 @@ export default function VendorDashboard() {
                   </p>
                   <p className="mt-3 text-2xl font-black text-slate-900">{item.value}</p>
                 </div>
-                <span className="rounded-2xl bg-amber-50 p-3 text-amber-500">
+                <span className="rounded-2xl bg-orange-50 p-3 text-orange-600">
                   <Icon size={18} />
                 </span>
               </div>
@@ -137,8 +137,8 @@ export default function VendorDashboard() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[28px] border border-white/80 bg-white/92 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-400">Latest Orders</p>
+        <div className="surface-panel-lg p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#102A43]">Latest Orders</p>
           <h2 className="mt-1 text-lg font-black text-slate-900">Recent sales activity</h2>
 
           <div className="mt-4 space-y-3">
@@ -152,7 +152,7 @@ export default function VendorDashboard() {
                     </p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                    <span className="inline-flex rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
                       {order.status.replace(/_/g, " ")}
                     </span>
                     <p className="mt-2 text-sm font-semibold text-slate-900">
@@ -173,8 +173,8 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/80 bg-white/92 p-5 shadow-[0_20px_40px_rgba(15,23,42,0.06)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-500">Catalog Snapshot</p>
+        <div className="surface-panel-lg p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#102A43]">Catalog Snapshot</p>
           <h2 className="mt-1 text-lg font-black text-slate-900">Product readiness</h2>
 
           <div className="mt-4 space-y-3">
@@ -194,8 +194,8 @@ export default function VendorDashboard() {
                     product.status === "approved"
                       ? "bg-emerald-100 text-emerald-700"
                       : product.status === "rejected"
-                        ? "bg-rose-100 text-rose-700"
-                        : "bg-amber-100 text-amber-700"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-orange-100 text-orange-700"
                   }`}
                 >
                   {product.status}
@@ -204,9 +204,9 @@ export default function VendorDashboard() {
             ))}
 
             {!products.length ? (
-              <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 px-4 py-4 text-sm text-slate-600">
+              <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/70 px-4 py-4 text-sm text-slate-600">
                 <div className="flex items-center gap-2 font-semibold text-slate-900">
-                  <FiAlertCircle className="text-amber-500" />
+                  <FiAlertCircle className="text-orange-500" />
                   Start by adding your first product
                 </div>
                 <p className="mt-1">Products you submit will stay pending until admin review is complete.</p>
