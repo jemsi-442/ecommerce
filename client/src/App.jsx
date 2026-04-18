@@ -25,6 +25,7 @@ const Storefront = lazy(() => import("./pages/Storefront"));
 
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const AdminOrders = lazy(() => import("./admin/pages/AdminOrders"));
+const AdminDeliveryIssues = lazy(() => import("./admin/pages/AdminDeliveryIssues"));
 const AdminProducts = lazy(() => import("./admin/pages/AdminProducts"));
 const AdminUsers = lazy(() => import("./admin/pages/AdminUsers"));
 const AdminNotifications = lazy(() => import("./admin/pages/AdminNotifications"));
@@ -37,6 +38,7 @@ const RiderProfile = lazy(() => import("./rider/RiderProfile"));
 const VendorDashboard = lazy(() => import("./vendor/VendorDashboard"));
 const VendorProducts = lazy(() => import("./vendor/VendorProducts"));
 const VendorOrders = lazy(() => import("./vendor/VendorOrders"));
+const VendorDeliveryIssues = lazy(() => import("./vendor/VendorDeliveryIssues"));
 const VendorProfile = lazy(() => import("./vendor/VendorProfile"));
 const VendorPayouts = lazy(() => import("./vendor/VendorPayouts"));
 const VendorRiders = lazy(() => import("./vendor/VendorRiders"));
@@ -124,6 +126,7 @@ export default function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="delivery-issues" element={<AdminDeliveryIssues />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="notifications" element={<AdminNotifications />} />
@@ -143,6 +146,7 @@ export default function App() {
           <Route index element={<VendorDashboard />} />
           <Route path="products" element={<VendorProducts />} />
           <Route path="orders" element={<VendorOrders />} />
+          <Route path="delivery-issues" element={<VendorDeliveryIssues />} />
           <Route path="riders" element={<VendorRiders />} />
           <Route path="profile" element={<VendorProfile />} />
           <Route path="payouts" element={<VendorPayouts />} />

@@ -360,7 +360,7 @@ export default function VendorOrders() {
               ))}
             </div>
 
-            {order.delivery?.proofRecipient || order.delivery?.proofNote ? (
+            {order.delivery?.proofRecipient || order.delivery?.proofNote || order.delivery?.proofImage ? (
               <div className="mt-4 rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -375,9 +375,23 @@ export default function VendorOrders() {
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-3 text-sm text-slate-600">
-                  {order.delivery?.proofNote || "No delivery note was left for this drop-off."}
-                </p>
+                <div className="mt-3 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <p className="text-sm text-slate-600">
+                    {order.delivery?.proofNote || "No delivery note was left for this drop-off."}
+                  </p>
+                  {order.delivery?.proofImage ? (
+                    <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white">
+                      <img
+                        src={resolveImageUrl(order.delivery.proofImage, PLACEHOLDER_IMAGE)}
+                        alt="Delivery proof"
+                        className="h-48 w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = PLACEHOLDER_IMAGE;
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 

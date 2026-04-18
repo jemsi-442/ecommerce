@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { FiBell, FiCreditCard, FiHome, FiLogOut, FiPackage, FiShoppingBag, FiUsers, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiBell, FiCreditCard, FiHome, FiLogOut, FiPackage, FiShoppingBag, FiUsers, FiX } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
   { name: "Marketplace Home", path: "/admin", icon: FiHome },
   { name: "Catalog", path: "/admin/products", icon: FiPackage },
   { name: "Sales", path: "/admin/orders", icon: FiShoppingBag },
+  { name: "Delivery Issues", path: "/admin/delivery-issues", icon: FiAlertCircle },
   { name: "Customers", path: "/admin/users", icon: FiUsers },
   { name: "Updates", path: "/admin/notifications", icon: FiBell },
   { name: "Vendor Settlements", path: "/admin/payouts", icon: FiCreditCard },

@@ -2,6 +2,7 @@ import express from "express";
 import { Op } from "sequelize";
 import { Order, OrderItem, Product, Rider, User } from "../models/index.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { upload, uploadDeliveryProofImage } from "../middleware/uploadMiddleware.js";
 import { assignRider, getOrderVendorRiderScope } from "../utils/assignRider.js";
 import { serializeOrder } from "../utils/serializers.js";
 
@@ -225,7 +226,7 @@ router.put("/orders/:id/reject", verifyToken, riderOnly, async (req, res) => {
   });
 });
 
-router.put("/orders/:id/delivered", verifyToken, riderOnly, async (req, res) => {
+router.put("/orders/:id/delivered", verifyToken, upload.single("proofImage"), riderOnly, async (req, res) => {
   const order = await Order.findByPk(req.params.id);
 
   if (!order) return res.status(404).json({ message: "Order not found" });
@@ -236,12 +237,19 @@ router.put("/orders/:id/delivered", verifyToken, riderOnly, async (req, res) => 
 
   const proofRecipient = String(req.body?.recipientName || "").trim();
   const proofNote = String(req.body?.deliveryNote || "").trim();
+  let proofImage = null;
+
+  if (req.file?.buffer) {
+    proofImage = await uploadDeliveryProofImage(req.file.buffer, req.file.originalname || "delivery-proof");
+  }
 
   order.status = "delivered";
   order.deliveredAt = new Date();
   order.completedAt = new Date();
   order.deliveryProofRecipient = proofRecipient || null;
   order.deliveryProofNote = proofNote || null;
+  order.deliveryProofImageUrl = proofImage?.url || order.deliveryProofImageUrl || null;
+  order.deliveryProofImagePublicId = proofImage?.publicId || order.deliveryProofImagePublicId || null;
 
   req.rider.available = true;
   await req.rider.save();

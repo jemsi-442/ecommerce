@@ -3,6 +3,7 @@ import { FiCalendar, FiClock, FiMapPin, FiSearch, FiShoppingBag, FiTruck } from 
 import axios from "../utils/axios";
 import { extractList } from "../utils/apiShape";
 import PageState from "../components/PageState";
+import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../utils/image";
 
 const formatCurrency = (value) => `TZS ${Number(value || 0).toLocaleString()}`;
 
@@ -286,18 +287,32 @@ export default function RiderHistory() {
                   <HistoryDetail icon={FiCalendar} label="Completed" value={formatDateTime(completedAt)} subvalue={`Assigned ${formatDateTime(order.delivery?.assignedAt)}`} />
                 </div>
 
-                {order.delivery?.proofRecipient || order.delivery?.proofNote ? (
+                {order.delivery?.proofRecipient || order.delivery?.proofNote || order.delivery?.proofImage ? (
                   <div className="mt-5 rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Delivery proof</p>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Received by</p>
-                        <p className="mt-1 font-semibold text-slate-900">{order.delivery?.proofRecipient || "Not recorded"}</p>
+                    <div className="mt-3 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Received by</p>
+                          <p className="mt-1 font-semibold text-slate-900">{order.delivery?.proofRecipient || "Not recorded"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rider note</p>
+                          <p className="mt-1 text-sm text-slate-600">{order.delivery?.proofNote || "No delivery note left"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rider note</p>
-                        <p className="mt-1 text-sm text-slate-600">{order.delivery?.proofNote || "No delivery note left"}</p>
-                      </div>
+                      {order.delivery?.proofImage ? (
+                        <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white">
+                          <img
+                            src={resolveImageUrl(order.delivery.proofImage, PLACEHOLDER_IMAGE)}
+                            alt="Delivery proof"
+                            className="h-52 w-full object-cover"
+                            onError={(event) => {
+                              event.currentTarget.src = PLACEHOLDER_IMAGE;
+                            }}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

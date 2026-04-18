@@ -137,6 +137,9 @@ export const serializeOrder = (row) => {
       completedAt: order.completedAt,
       proofRecipient: order.deliveryProofRecipient || order.delivery_proof_recipient || null,
       proofNote: order.deliveryProofNote || order.delivery_proof_note || null,
+      proofImage: order.deliveryProofImageUrl || order.delivery_proof_image_url || null,
+      proofImagePublicId:
+        order.deliveryProofImagePublicId || order.delivery_proof_image_public_id || null,
       issueReportedAt: order.deliveryIssueReportedAt || order.delivery_issue_reported_at || null,
       issueReason: order.deliveryIssueReason || order.delivery_issue_reason || null,
       issueStatus: order.deliveryIssueStatus || order.delivery_issue_status || null,

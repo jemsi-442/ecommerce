@@ -4,6 +4,7 @@ import axios from "../utils/axios";
 import { extractList } from "../utils/apiShape";
 import PageState from "../components/PageState";
 import useToast from "../hooks/useToast";
+import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../utils/image";
 
 const AUTO_REFRESH_INTERVAL = 15000;
 const SLA_SECONDS = 120;
@@ -61,12 +62,14 @@ const RiderOrders = () => {
       setOrders(nextOrders);
       setProofDrafts((current) => {
         const next = { ...current };
-        nextOrders.forEach((order) => {
+            nextOrders.forEach((order) => {
           const key = String(order._id);
           if (!next[key]) {
             next[key] = {
               recipientName: order.delivery?.proofRecipient || "",
               deliveryNote: order.delivery?.proofNote || "",
+              proofImageFile: null,
+              proofImagePreview: order.delivery?.proofImage || "",
             };
           }
         });
@@ -142,13 +145,19 @@ const RiderOrders = () => {
     try {
       const payload =
         action === "delivered"
-          ? {
-              recipientName: proofDrafts[String(orderId)]?.recipientName || "",
-              deliveryNote: proofDrafts[String(orderId)]?.deliveryNote || "",
-            }
+          ? (() => {
+              const draft = proofDrafts[String(orderId)] || {};
+              const formData = new FormData();
+              formData.append("recipientName", draft.recipientName || "");
+              formData.append("deliveryNote", draft.deliveryNote || "");
+              if (draft.proofImageFile) {
+                formData.append("proofImage", draft.proofImageFile);
+              }
+              return formData;
+            })()
           : undefined;
 
-      await axios.put(`/rider/orders/${orderId}/${action}`, payload);
+      await axios.put(`/rider/orders/${orderId}/${action}`, payload, action === "delivered" ? { headers: { "Content-Type": "multipart/form-data" } } : undefined);
       toast.success(
         action === "accept"
           ? "Delivery accepted"
@@ -168,10 +177,24 @@ const RiderOrders = () => {
   const updateProofDraft = (orderId, field, value) => {
     setProofDrafts((current) => ({
       ...current,
+        [String(orderId)]: {
+          recipientName: current[String(orderId)]?.recipientName || "",
+          deliveryNote: current[String(orderId)]?.deliveryNote || "",
+          proofImageFile: current[String(orderId)]?.proofImageFile || null,
+          proofImagePreview: current[String(orderId)]?.proofImagePreview || "",
+          [field]: value,
+        },
+      }));
+  };
+
+  const updateProofImage = (orderId, file) => {
+    setProofDrafts((current) => ({
+      ...current,
       [String(orderId)]: {
         recipientName: current[String(orderId)]?.recipientName || "",
         deliveryNote: current[String(orderId)]?.deliveryNote || "",
-        [field]: value,
+        proofImageFile: file || null,
+        proofImagePreview: file ? URL.createObjectURL(file) : current[String(orderId)]?.proofImagePreview || "",
       },
     }));
   };
@@ -266,7 +289,7 @@ const RiderOrders = () => {
             const percent = remaining !== null ? Math.round((remaining / SLA_SECONDS) * 100) : 100;
             const danger = remaining !== null && remaining <= 20;
             const storePhone = order.items?.find((item) => item.vendor?.businessPhone)?.vendor?.businessPhone;
-            const proof = proofDrafts[String(order._id)] || { recipientName: "", deliveryNote: "" };
+            const proof = proofDrafts[String(order._id)] || { recipientName: "", deliveryNote: "", proofImageFile: null, proofImagePreview: "" };
 
             return (
               <article key={order._id} className="surface-panel-lg p-5 md:p-6">
@@ -347,6 +370,35 @@ const RiderOrders = () => {
                           className="input"
                           placeholder="Short delivery note"
                         />
+                      </div>
+                      <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">Proof photo</p>
+                            <p className="mt-1 text-sm text-slate-500">Add a handoff photo when available so support and store teams can verify delivery faster.</p>
+                          </div>
+                          <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/60">
+                            Choose photo
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              className="hidden"
+                              onChange={(event) => updateProofImage(order._id, event.target.files?.[0] || null)}
+                            />
+                          </label>
+                        </div>
+                        {proof.proofImagePreview ? (
+                          <div className="mt-4 overflow-hidden rounded-[22px] border border-slate-200 bg-slate-100">
+                            <img
+                              src={resolveImageUrl(proof.proofImagePreview, PLACEHOLDER_IMAGE)}
+                              alt="Delivery proof preview"
+                              className="h-48 w-full object-cover"
+                              onError={(event) => {
+                                event.currentTarget.src = PLACEHOLDER_IMAGE;
+                              }}
+                            />
+                          </div>
+                        ) : null}
                       </div>
                     </div>
 

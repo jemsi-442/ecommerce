@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
+  FiAlertCircle,
   FiCreditCard,
   FiGrid,
   FiLogOut,
@@ -16,6 +17,7 @@ const navItems = [
   { name: "Overview", path: "/vendor", icon: FiGrid },
   { name: "Products", path: "/vendor/products", icon: FiPackage },
   { name: "Orders", path: "/vendor/orders", icon: FiShoppingBag },
+  { name: "Delivery Issues", path: "/vendor/delivery-issues", icon: FiAlertCircle },
   { name: "Riders", path: "/vendor/riders", icon: FiTruck },
   { name: "Payouts", path: "/vendor/payouts", icon: FiCreditCard },
   { name: "Store Profile", path: "/vendor/profile", icon: FiSettings },

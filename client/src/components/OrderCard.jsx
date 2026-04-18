@@ -24,6 +24,7 @@ import {
   getMobileNetworkPrefixes,
   validatePhoneForNetwork,
 } from "../utils/mobileMoneyNetworks";
+import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../utils/image";
 
 const statusClass = {
   pending: "bg-orange-50 text-orange-700 border-orange-200",
@@ -303,18 +304,32 @@ export default function OrderCard({
               )}
             </div>
 
-            {order.status === "delivered" && (order.delivery?.proofRecipient || order.delivery?.proofNote) ? (
+            {order.status === "delivered" && (order.delivery?.proofRecipient || order.delivery?.proofNote || order.delivery?.proofImage) ? (
               <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Delivery proof</p>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Received by</p>
-                    <p className="mt-1 font-semibold text-slate-900">{order.delivery?.proofRecipient || "Not recorded"}</p>
+                <div className="mt-2 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Received by</p>
+                      <p className="mt-1 font-semibold text-slate-900">{order.delivery?.proofRecipient || "Not recorded"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rider note</p>
+                      <p className="mt-1 text-sm text-slate-600">{order.delivery?.proofNote || "No note was added for this delivery."}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Rider note</p>
-                    <p className="mt-1 text-sm text-slate-600">{order.delivery?.proofNote || "No note was added for this delivery."}</p>
-                  </div>
+                  {order.delivery?.proofImage ? (
+                    <div className="overflow-hidden rounded-[18px] border border-emerald-200/80 bg-white">
+                      <img
+                        src={resolveImageUrl(order.delivery.proofImage, PLACEHOLDER_IMAGE)}
+                        alt="Delivery proof"
+                        className="h-48 w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = PLACEHOLDER_IMAGE;
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : null}

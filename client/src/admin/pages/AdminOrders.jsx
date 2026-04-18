@@ -11,6 +11,7 @@ import { useToast } from "../../hooks/useToast";
 import { TableSkeleton } from "../../components/Skeleton";
 import PaymentNetworkBadge from "../../components/PaymentNetworkBadge";
 import { getOrderStatusTone } from "../../utils/statusStyles";
+import { PLACEHOLDER_IMAGE, resolveImageUrl } from "../../utils/image";
 
 const NEXT_STATUS = {
   paid: ["out_for_delivery", "refunded"],
@@ -328,6 +329,18 @@ export default function AdminOrders() {
                   {order.delivery?.proofRecipient ? (
                     <div className="mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                       Received by {order.delivery.proofRecipient}
+                    </div>
+                  ) : null}
+                  {order.delivery?.proofImage ? (
+                    <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                      <img
+                        src={resolveImageUrl(order.delivery.proofImage, PLACEHOLDER_IMAGE)}
+                        alt="Delivery proof"
+                        className="h-24 w-32 object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = PLACEHOLDER_IMAGE;
+                        }}
+                      />
                     </div>
                   ) : null}
                   {order.delivery?.issueReason ? (

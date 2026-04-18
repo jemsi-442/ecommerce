@@ -152,6 +152,18 @@ const Order = sequelize.define(
       defaultValue: null,
       field: "delivery_proof_note",
     },
+    deliveryProofImageUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_proof_image_url",
+    },
+    deliveryProofImagePublicId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      field: "delivery_proof_image_public_id",
+    },
     deliveryIssueReportedAt: {
       type: DataTypes.DATE,
       allowNull: true,
